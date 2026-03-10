@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from networkx import nx
+import networkx as nx
 import logging_utils
 import constants_network as CONST
 import operator
