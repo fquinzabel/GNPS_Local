@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Job {{ job.id }} — GNPS Local{% endblock %}
+{% block content %}
+
+<div style="display:flex; align-items:center; gap:16px; margin-bottom:4px;">
+  <h1>Job {{ job.id }}</h1>
+  <span class="badge badge-{{ job.status }}" id="status-badge">{{ job.status }}</span>
+</div>
+<p class="subtitle">{{ job.workflow | replace('_', ' ') | title }} &nbsp;·&nbsp; Started {{ job.created_at[:19] | replace('T', ' ') }}</p>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+  <!-- Parameters -->
+  <div class="card">
+    <h2>Parameters</h2>
+    <table>
+      <tbody>
+        {% for k, v in job.params.items() %}
+        <tr>
+          <td class="muted" style="width:55%">{{ k }}</td>
+          <td class="mono">{{ v }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Output files -->
+  <div class="card">
+    <h2>Output Files</h2>
+    <div id="output-files-container">
+    {% if output_files %}
+    <table><tbody>
+        {% for f in output_files %}
+        <tr>
+          <td>{{ f.name }}</td>
+          <td class="muted" style="width:80px; text-align:right;">{{ (f.size / 1024) | round(1) }} KB</td>
+          <td style="width:80px; text-align:right;">
+            <a href="/api/job/{{ job.id }}/download/{{ f.path }}" class="btn btn-ghost" style="padding:3px 9px; font-size:11px;">↓</a>
+          </td>
+        </tr>
+        {% endfor %}
+    </tbody></table>
+    {% else %}
+    <p class="muted" style="font-size:12px;">No output files yet.</p>
+    {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Log -->
+<div class="card" style="margin-top:4px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <h2 style="margin:0;">Run Log</h2>
+    <span class="muted" style="font-size:11px;" id="log-ts"></span>
+  </div>
+  <pre class="log" id="log-output">{{ '' }}</pre>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+const jobId = "{{ job.id }}";
+const logEl = document.getElementById('log-output');
+const badgeEl = document.getElementById('status-badge');
+const tsEl = document.getElementById('log-ts');
+let lastStatus = "{{ job.status }}";
+
+async function fetchLog() {
+  const r = await fetch(`/api/job/${jobId}/log`);
+  const d = await r.json();
+  const atBottom = logEl.scrollHeight - logEl.scrollTop <= logEl.clientHeight + 40;
+  logEl.textContent = d.log || '(no output yet)';
+  if (atBottom) logEl.scrollTop = logEl.scrollHeight;
+  tsEl.textContent = new Date().toLocaleTimeString();
+}
+
+async function fetchStatus() {
+  const r = await fetch(`/api/job/${jobId}`);
+  const d = await r.json();
+  badgeEl.textContent = d.status;
+  badgeEl.className = `badge badge-${d.status}`;
+  lastStatus = d.status;
+  return d.status === 'running' || d.status === 'queued';
+}
+
+async function fetchFiles() {
+  const r = await fetch(`/api/job/${jobId}/files`);
+  const files = await r.json();
+  const container = document.getElementById('output-files-container');
+  if (!container) return;
+  if (!files.length) return;
+  let html = '<table><tbody>';
+  files.forEach(f => {
+    const kb = (f.size / 1024).toFixed(1);
+    html += `<tr>
+      <td>${f.name}</td>
+      <td class="muted" style="width:80px;text-align:right">${kb} KB</td>
+      <td style="width:80px;text-align:right">
+        <a href="/api/job/${jobId}/download/${f.path}" class="btn btn-ghost" style="padding:3px 9px;font-size:11px;">↓</a>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+async function poll() {
+  await fetchLog();
+  const active = await fetchStatus();
+  if (active) {
+    setTimeout(poll, 2500);
+  } else {
+    await fetchFiles();
+  }
+}
+
+poll();
+</script>
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Molecular Networking — GNPS Local{% endblock %}
+{% block content %}
+
+<h1>Molecular Networking</h1>
+<p class="subtitle">Classical spectral networking via MSCluster + pairwise cosine similarity (metabolomics-snets-v2)</p>
+
+<form id="submit-form" enctype="multipart/form-data">
+<div class="card">
+
+  <div class="form-section-title">Input Spectra (required)</div>
+  <div class="file-drop" id="spectra-drop">
+    <input type="file" name="input_spectra" multiple accept=".mgf,.mzML,.mzXML">
+    <div>Drop MGF / mzML files here or click to browse</div>
+    <div style="font-size:11px; margin-top:4px; color:var(--muted)">Accepts .mgf, .mzML, .mzXML · Multiple files allowed</div>
+  </div>
+  <div class="file-list"></div>
+
+  <div class="form-section-title">Networking Parameters</div>
+  <div class="form-grid">
+    <div>
+      <label>Fragment Ion Tolerance (Da)</label>
+      <input type="number" name="TOLERANCE" value="0.02" step="0.001" min="0">
+      <div class="hint">Max m/z difference between matched fragment ions</div>
+    </div>
+    <div>
+      <label>Min Matched Peaks</label>
+      <input type="number" name="MIN_MATCHED_PEAKS" value="6" min="1">
+    </div>
+    <div>
+      <label>Cosine Score Threshold</label>
+      <input type="number" name="SCORE_THRESHOLD" value="0.7" step="0.01" min="0" max="1">
+    </div>
+    <div>
+      <label>Max Precursor Mass Shift (Da)</label>
+      <input type="number" name="MAX_SHIFT" value="500" min="0">
+    </div>
+    <div>
+      <label>Top K Edges per Node</label>
+      <input type="number" name="TOPK" value="10" min="1">
+    </div>
+    <div>
+      <label>Max Component Size</label>
+      <input type="number" name="MAX_COMPONENT_SIZE" value="100" min="0">
+      <div class="hint">0 = no limit</div>
+    </div>
+    <div>
+      <label>Filter G6 Blanks</label>
+      <select name="FILTER_G6_BLANKS">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-section-title">Library Search</div>
+  <div class="form-grid">
+    <div>
+      <label>Min Matched Peaks (Library)</label>
+      <input type="number" name="MIN_MATCHED_PEAKS_SEARCH" value="6" min="1">
+    </div>
+    <div>
+      <label>Score Threshold (Library)</label>
+      <input type="number" name="SCORE_THRESHOLD_SEARCH" value="0.7" step="0.01" min="0" max="1">
+    </div>
+    <div>
+      <label>Analog Search</label>
+      <select name="ANALOG_SEARCH">
+        <option value="0">Disabled</option>
+        <option value="1">Enabled</option>
+      </select>
+    </div>
+    <div>
+      <label>Max Results per Spectrum</label>
+      <input type="number" name="MAXIMUM_NUMBER_OF_RESULTS" value="1" min="1">
+    </div>
+  </div>
+
+  <div class="form-section-title">Optional Inputs</div>
+
+  <label>Library Files (.mgf) — leave empty to use /libraries/ folder</label>
+  <div class="file-drop">
+    <input type="file" name="library" multiple accept=".mgf">
+    <div>Drop spectral library MGF files here or click to browse</div>
+  </div>
+  <div class="file-list"></div>
+
+  <label>Group Mapping (.csv)</label>
+  <div class="file-drop">
+    <input type="file" name="groupmapping" accept=".csv,.txt">
+    <div>Drop group mapping file or click to browse</div>
+  </div>
+  <div class="file-list"></div>
+
+  <label>Attribute Mapping (.csv)</label>
+  <div class="file-drop">
+    <input type="file" name="attributemapping" accept=".csv,.txt">
+    <div>Drop attribute mapping file or click to browse</div>
+  </div>
+  <div class="file-list"></div>
+
+  <label>Metadata File (.tsv)</label>
+  <div class="file-drop">
+    <input type="file" name="metadatafile" accept=".tsv,.txt,.csv">
+    <div>Drop metadata file or click to browse</div>
+  </div>
+  <div class="file-list"></div>
+
+  <div style="margin-top:28px; display:flex; gap:12px; align-items:center;">
+    <button type="submit" class="btn btn-primary" id="submit-btn">Submit Job</button>
+    <a href="/" class="btn btn-ghost">Cancel</a>
+    <span id="submit-status" style="font-size:12px; color:var(--muted);"></span>
+  </div>
+</div>
+</form>
+
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('submit-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const status = document.getElementById('submit-status');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  status.textContent = '';
+
+  const data = new FormData(e.target);
+  try {
+    const r = await fetch('/api/submit/molecular_networking', { method: 'POST', body: data });
+    const d = await r.json();
+    if (r.ok) {
+      window.location.href = `/job/${d.job_id}`;
+    } else {
+      status.textContent = d.detail || 'Submission failed';
+      btn.disabled = false;
+      btn.textContent = 'Submit Job';
+    }
+  } catch(err) {
+    status.textContent = 'Network error: ' + err.message;
+    btn.disabled = false;
+    btn.textContent = 'Submit Job';
+  }
+});
+</script>
+{% endblock %}

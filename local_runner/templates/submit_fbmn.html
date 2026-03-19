@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Feature-Based Molecular Networking — GNPS Local{% endblock %}
+{% block content %}
+
+<h1>Feature-Based Molecular Networking</h1>
+<p class="subtitle">FBMN: uses a pre-computed feature table from MZmine, XCMS, MS-DIAL, OpenMS, etc.</p>
+
+<form id="submit-form" enctype="multipart/form-data">
+<div class="card">
+
+  <div class="form-section-title">Input Spectra — MGF (required)</div>
+  <div class="file-drop">
+    <input type="file" name="input_spectra" multiple accept=".mgf">
+    <div>Drop MGF file(s) here or click to browse</div>
+  </div>
+  <div class="file-list"></div>
+
+  <div class="form-section-title">Quantification Table (required)</div>
+  <div class="file-drop">
+    <input type="file" name="quantification_table" accept=".csv,.txt,.tsv">
+    <div>Drop feature quantification table here or click to browse</div>
+    <div style="font-size:11px; margin-top:4px; color:var(--muted)">MZmine2, MZmine3, XCMS, MS-DIAL, OpenMS, Progenesis, etc.</div>
+  </div>
+  <div class="file-list"></div>
+
+  <div class="form-section-title">Feature Table Source</div>
+  <div class="form-grid">
+    <div>
+      <label>Quantification Table Source</label>
+      <select name="QUANT_TABLE_SOURCE">
+        <option value="mzmine2">MZmine2</option>
+        <option value="mzmine3">MZmine3</option>
+        <option value="xcms3">XCMS3</option>
+        <option value="openms">OpenMS</option>
+        <option value="ms-dial">MS-DIAL</option>
+        <option value="msdial">MS-DIAL (alt)</option>
+        <option value="progenesis">Progenesis</option>
+        <option value="agilent">Agilent</option>
+        <option value="metaboscape">MetaboScape</option>
+        <option value="mztab-m">mzTab-M</option>
+      </select>
+    </div>
+    <div>
+      <label>Quantification Normalization</label>
+      <select name="QUANT_FILE_NORM">
+        <option value="None">None</option>
+        <option value="mzmine_intensity_norm">MZmine Intensity</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-section-title">Spectra Filtering</div>
+  <div class="form-grid">
+    <div>
+      <label>Filter Precursor Window</label>
+      <select name="FILTER_PRECURSOR_WINDOW">
+        <option value="1">Yes (recommended)</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+    <div>
+      <label>Window Filter</label>
+      <select name="WINDOW_FILTER">
+        <option value="1">Yes (recommended)</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-section-title">Networking Parameters</div>
+  <div class="form-grid">
+    <div>
+      <label>Fragment Ion Tolerance (Da)</label>
+      <input type="number" name="TOLERANCE" value="0.02" step="0.001" min="0">
+    </div>
+    <div>
+      <label>Min Matched Peaks</label>
+      <input type="number" name="MIN_MATCHED_PEAKS" value="6" min="1">
+    </div>
+    <div>
+      <label>Cosine Score Threshold</label>
+      <input type="number" name="SCORE_THRESHOLD" value="0.7" step="0.01" min="0" max="1">
+    </div>
+    <div>
+      <label>Max Precursor Mass Shift (Da)</label>
+      <input type="number" name="MAX_SHIFT" value="500" min="0">
+    </div>
+    <div>
+      <label>Top K Edges per Node</label>
+      <input type="number" name="TOPK" value="10" min="1">
+    </div>
+    <div>
+      <label>Max Component Size</label>
+      <input type="number" name="MAX_COMPONENT_SIZE" value="100" min="0">
+    </div>
+  </div>
+
+  <div class="form-section-title">Library Search</div>
+  <div class="form-grid">
+    <div>
+      <label>Min Matched Peaks (Library)</label>
+      <input type="number" name="MIN_MATCHED_PEAKS_SEARCH" value="6" min="1">
+    </div>
+    <div>
+      <label>Score Threshold (Library)</label>
+      <input type="number" name="SCORE_THRESHOLD_SEARCH" value="0.7" step="0.01" min="0" max="1">
+    </div>
+    <div>
+      <label>Analog Search</label>
+      <select name="ANALOG_SEARCH">
+        <option value="0">Disabled</option>
+        <option value="1">Enabled</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-section-title">Optional Inputs</div>
+
+  <label>Library Files (.mgf) — leave empty to use /libraries/ folder</label>
+  <div class="file-drop">
+    <input type="file" name="library" multiple accept=".mgf">
+    <div>Drop spectral library MGF files here or click to browse</div>
+  </div>
+  <div class="file-list"></div>
+
+  <label>Metadata Table (.tsv)</label>
+  <div class="file-drop">
+    <input type="file" name="metadata_table" accept=".tsv,.txt,.csv">
+    <div>Drop metadata table or click to browse</div>
+  </div>
+  <div class="file-list"></div>
+
+  <div style="margin-top:28px; display:flex; gap:12px; align-items:center;">
+    <button type="submit" class="btn btn-primary" id="submit-btn">Submit Job</button>
+    <a href="/" class="btn btn-ghost">Cancel</a>
+    <span id="submit-status" style="font-size:12px; color:var(--muted);"></span>
+  </div>
+</div>
+</form>
+
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('submit-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const status = document.getElementById('submit-status');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  const data = new FormData(e.target);
+  try {
+    const r = await fetch('/api/submit/fbmn', { method: 'POST', body: data });
+    const d = await r.json();
+    if (r.ok) window.location.href = `/job/${d.job_id}`;
+    else { status.textContent = d.detail || 'Submission failed'; btn.disabled = false; btn.textContent = 'Submit Job'; }
+  } catch(err) {
+    status.textContent = 'Network error: ' + err.message;
+    btn.disabled = false; btn.textContent = 'Submit Job';
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}GC-MS Deconvolution — GNPS Local{% endblock %}
+{% block content %}
+
+<h1>GC-MS Deconvolution</h1>
+<p class="subtitle">MSHub-GC: automated deconvolution of GC-MS data → clustered MGF + quantification table</p>
+
+<form id="submit-form" enctype="multipart/form-data">
+<div class="card">
+
+  <div class="form-section-title">Input Spectra (required)</div>
+  <div class="file-drop">
+    <input type="file" name="input_spectra" multiple accept=".mzML,.mzml,.CDF,.cdf,.netCDF">
+    <div>Drop GC-MS files here or click to browse</div>
+    <div style="font-size:11px; margin-top:4px; color:var(--muted)">Accepts .mzML, .CDF, .netCDF · Multiple files allowed</div>
+  </div>
+  <div class="file-list"></div>
+
+  <div class="form-section-title">Preprocessing Parameters</div>
+  <div class="form-grid">
+    <div>
+      <label>Filter Window (min)</label>
+      <input type="number" name="FILTER_WINDOW" value="0.5" step="0.1" min="0">
+      <div class="hint">Retention time window for smoothing</div>
+    </div>
+    <div>
+      <label>Max RT Shift (seconds)</label>
+      <input type="number" name="MAX_SHIFT_SECONDS" value="5.0" step="0.5" min="0">
+      <div class="hint">Max inter-sample RT alignment shift</div>
+    </div>
+    <div>
+      <label>Min Peaks per Compound</label>
+      <input type="number" name="NUM_PEAKS" value="5" min="1">
+    </div>
+    <div>
+      <label>Noise Threshold</label>
+      <input type="number" name="NOISE_THRESHOLD" value="0.0" step="0.1" min="0">
+      <div class="hint">Minimum intensity; 0 = auto</div>
+    </div>
+    <div>
+      <label>Cosine Similarity Threshold</label>
+      <input type="number" name="COSINE_THRESHOLD" value="0.8" step="0.01" min="0" max="1">
+      <div class="hint">Minimum score for spectral clustering</div>
+    </div>
+    <div>
+      <label>Min Cluster Size</label>
+      <input type="number" name="CLUSTER_MIN_SIZE" value="1" min="1">
+      <div class="hint">Min samples a compound must appear in</div>
+    </div>
+  </div>
+
+  <div style="margin-top:28px; display:flex; gap:12px; align-items:center;">
+    <button type="submit" class="btn btn-primary" id="submit-btn">Submit Job</button>
+    <a href="/" class="btn btn-ghost">Cancel</a>
+    <span id="submit-status" style="font-size:12px; color:var(--muted);"></span>
+  </div>
+</div>
+</form>
+
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('submit-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const status = document.getElementById('submit-status');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  const data = new FormData(e.target);
+  try {
+    const r = await fetch('/api/submit/mshub_gc', { method: 'POST', body: data });
+    const d = await r.json();
+    if (r.ok) window.location.href = `/job/${d.job_id}`;
+    else { status.textContent = d.detail || 'Submission failed'; btn.disabled = false; btn.textContent = 'Submit Job'; }
+  } catch(err) {
+    status.textContent = 'Network error: ' + err.message;
+    btn.disabled = false; btn.textContent = 'Submit Job';
+  }
+});
+</script>
+{% endblock %}
