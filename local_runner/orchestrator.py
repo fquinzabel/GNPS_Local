@@ -74,7 +74,7 @@ class Job:
         with open(self.log_file, "a") as f:
             f.write(line)
 
-    def run_step(self, step_name: str, cmd: list[str], cwd: Optional[Path] = None) -> bool:
+    def run_step(self, step_name: str, cmd: list[str], cwd: Optional[Path] = None, timeout: int = 3600) -> bool:
         """Run a single pipeline step. Returns True on success."""
         self.log(f"--- STEP: {step_name} ---")
         self.log(f"CMD: {' '.join(str(c) for c in cmd)}")
@@ -84,7 +84,7 @@ class Job:
                 cwd=str(cwd or REPO_ROOT),
                 capture_output=True,
                 text=True,
-                timeout=3600,  # 1 hour max per step
+                timeout=timeout,  # Customizable timeout per step
             )
             if result.stdout:
                 self.log(result.stdout)
@@ -96,7 +96,7 @@ class Job:
             self.log(f"STEP OK")
             return True
         except subprocess.TimeoutExpired:
-            self.log("STEP TIMED OUT after 1 hour")
+            self.log(f"STEP TIMED OUT after {timeout} seconds")
             return False
         except Exception as e:
             self.log(f"STEP ERROR: {e}")
@@ -124,15 +124,26 @@ _jobs: dict[str, Job] = {}
 _lock = threading.Lock()
 
 
-def submit_job(workflow: str, params: dict) -> Job:
-    """Create and enqueue a job. Returns immediately."""
+def create_job(workflow: str, params: dict) -> Job:
+    """Create and register a job WITHOUT starting it.
+    Call start_job() only after all input files have been saved to disk."""
     job = Job(workflow, params)
     with _lock:
         _jobs[job.id] = job
+    return job
 
-    # Load existing jobs from disk on startup, then run in background thread
+
+def start_job(job: Job):
+    """Start a previously created job in a background thread."""
     thread = threading.Thread(target=_run_job, args=(job,), daemon=True)
     thread.start()
+
+
+def submit_job(workflow: str, params: dict) -> Job:
+    """Create, register, and immediately start a job.
+    Only safe when there are no files to upload first (legacy callers)."""
+    job = create_job(workflow, params)
+    start_job(job)
     return job
 
 

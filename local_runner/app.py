@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional, List, Annotated
 
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
@@ -25,7 +25,12 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 # ── Pages ──────────────────────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
+async def root(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
+
+
+@app.get("/jobs", response_class=HTMLResponse)
+async def jobs_page(request: Request):
     jobs = orc.list_jobs()
     return templates.TemplateResponse("index.html", {"request": request, "jobs": jobs})
 
@@ -117,7 +122,7 @@ async def submit_molecular_networking(
         "ANALOG_SEARCH": ANALOG_SEARCH,
         "MAXIMUM_NUMBER_OF_RESULTS": str(MAXIMUM_NUMBER_OF_RESULTS),
     }
-    job = orc.submit_job("molecular_networking", params)
+    job = orc.create_job("molecular_networking", params)
     await _save_uploads(job, input_spectra, subfolder=None)
     if library and library.filename:
         await _save_single_upload(job, library, library.filename)
@@ -127,6 +132,7 @@ async def submit_molecular_networking(
         await _save_single_upload(job, attributemapping, "attributemapping.csv")
     if metadatafile and metadatafile.filename:
         await _save_single_upload(job, metadatafile, "metadata.tsv")
+    orc.start_job(job)
     return {"job_id": job.id, "status": job.status}
 
 
@@ -138,6 +144,7 @@ async def submit_fbmn(
     TOLERANCE: float = Form(0.02),
     MIN_MATCHED_PEAKS: int = Form(6),
     SCORE_THRESHOLD: float = Form(0.7),
+    PAIRS_MIN_COSINE: float = Form(0.1),
     MAX_SHIFT: float = Form(500.0),
     TOPK: int = Form(10),
     MAX_COMPONENT_SIZE: int = Form(100),
@@ -159,6 +166,7 @@ async def submit_fbmn(
         "TOLERANCE": str(TOLERANCE),
         "MIN_MATCHED_PEAKS": str(MIN_MATCHED_PEAKS),
         "SCORE_THRESHOLD": str(SCORE_THRESHOLD),
+        "PAIRS_MIN_COSINE": str(PAIRS_MIN_COSINE),
         "MAX_SHIFT": str(MAX_SHIFT),
         "TOPK": str(TOPK),
         "MAX_COMPONENT_SIZE": str(MAX_COMPONENT_SIZE),
@@ -173,7 +181,7 @@ async def submit_fbmn(
         "METADATA_CONDITION_ONE": METADATA_CONDITION_ONE,
         "METADATA_CONDITION_TWO": METADATA_CONDITION_TWO,
     }
-    job = orc.submit_job("fbmn", params)
+    job = orc.create_job("fbmn", params)
     await _save_uploads(job, input_spectra, subfolder=None)
     if quantification_table and quantification_table.filename:
         await _save_single_upload(job, quantification_table, quantification_table.filename)
@@ -181,6 +189,7 @@ async def submit_fbmn(
         await _save_single_upload(job, library, library.filename)
     if metadata_table and metadata_table.filename:
         await _save_single_upload(job, metadata_table, "metadata.tsv")
+    orc.start_job(job)
     return {"job_id": job.id, "status": job.status}
 
 
@@ -202,8 +211,9 @@ async def submit_mshub_gc(
         "COSINE_THRESHOLD": str(COSINE_THRESHOLD),
         "CLUSTER_MIN_SIZE": str(CLUSTER_MIN_SIZE),
     }
-    job = orc.submit_job("mshub_gc", params)
+    job = orc.create_job("mshub_gc", params)
     await _save_uploads(job, input_spectra, subfolder=None)
+    orc.start_job(job)
     return {"job_id": job.id, "status": job.status}
 
 

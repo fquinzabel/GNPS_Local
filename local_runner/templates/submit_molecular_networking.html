@@ -51,6 +51,17 @@
         <option value="1">Yes</option>
       </select>
     </div>
+    <div>
+      <label>Molecular Community Networking</label>
+      <select name="MOLECULAR_COMMUNITY_NETWORKING">
+        <option value="0">Disabled</option>
+        <option value="1">Enabled</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="hint" id="mcn-hint" style="display:none;">
+    Settings adjusted automatically for Molecular Community Networking
   </div>
 
   <div class="form-section-title">Library Search</div>
@@ -117,6 +128,78 @@
 {% endblock %}
 {% block scripts %}
 <script>
+const mcnSelect = document.querySelector('[name="MOLECULAR_COMMUNITY_NETWORKING"]');
+const scoreInput = document.querySelector('[name="SCORE_THRESHOLD"]');
+const topkInput = document.querySelector('[name="TOPK"]');
+const maxCompInput = document.querySelector('[name="MAX_COMPONENT_SIZE"]');
+
+function clampInput(input) {
+  const min = input.min !== "" ? parseFloat(input.min) : -Infinity;
+  const max = input.max !== "" ? parseFloat(input.max) : Infinity;
+  let val = parseFloat(input.value);
+  if (isNaN(val)) return;
+  if (val < min) input.value = min;
+  if (val > max) input.value = max;
+}
+
+function attachClamping(input) {
+  input.addEventListener('input', () => {
+    if (mcnSelect.value === "1") {
+      clampInput(input);
+    }
+  });
+}
+attachClamping(scoreInput);
+attachClamping(topkInput);
+
+function updateMCNSettings() {
+  const enabled = mcnSelect.value === "1";
+  const hint = document.getElementById('mcn-hint');
+  if (hint) {
+    hint.style.display = enabled ? 'block' : 'none';
+  }
+
+  if (enabled) {
+    // Cosine Score Threshold
+    scoreInput.value = 0.1;
+    scoreInput.min = 0;
+    scoreInput.max = 0.1;
+    scoreInput.step = 0.01;
+
+    // Top K Edges
+    topkInput.value = 100;
+    topkInput.min = 100;
+    topkInput.max = 10000;
+
+    // Max Component Size (locked)
+    maxCompInput.value = 0;
+    maxCompInput.disabled = true;
+    maxCompInput.style.opacity = 0.5;
+
+    clampInput(scoreInput);
+    clampInput(topkInput);
+
+  } else {
+    // Reset to defaults
+    scoreInput.value = 0.7;
+    scoreInput.min = 0;
+    scoreInput.max = 1;
+
+    topkInput.value = 10;
+    topkInput.min = 1;
+    topkInput.max = "";
+
+    maxCompInput.disabled = false;
+    maxCompInput.style.opacity = 1;
+    maxCompInput.value = 100;
+  }
+}
+
+// Run on change
+mcnSelect.addEventListener('change', updateMCNSettings);
+
+// Run once on page load (in case of pre-filled forms)
+updateMCNSettings();
 document.getElementById('submit-form').addEventListener('submit', async e => {
   e.preventDefault();
   const btn = document.getElementById('submit-btn');
@@ -124,6 +207,12 @@ document.getElementById('submit-form').addEventListener('submit', async e => {
   btn.disabled = true;
   btn.textContent = 'Submitting…';
   status.textContent = '';
+
+  if (mcnSelect.value === "1") {
+    clampInput(scoreInput);
+    clampInput(topkInput);
+    maxCompInput.value = 0;
+  }
 
   const data = new FormData(e.target);
   try {

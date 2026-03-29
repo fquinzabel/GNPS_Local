@@ -21,6 +21,22 @@
       --danger: #f85149;
       --running: #58a6ff;
       --font: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      --log-text: #adbac7;
+
+      --badge-queued-bg: #21262d;
+      --badge-queued-text: #7d8590;
+      
+      --badge-running-bg: #0d2340;
+      --badge-running-text: #58a6ff;
+      --badge-running-border: #1f4070;
+
+      --badge-done-bg: #0d2a0d;
+      --badge-done-text: #3fb950;
+      --badge-done-border: #1a4a1a;
+
+      --badge-failed-bg: #2d0d0d;
+      --badge-failed-text: #f85149;
+      --badge-failed-border: #4a1a1a;
     }
 
     :root[data-theme="light"] {
@@ -36,6 +52,22 @@
       --warning: #9a6700;
       --danger: #d1242f;
       --running: #0969da;
+      --log-text: #24292f;
+
+      --badge-queued-bg: #eff2f5;
+      --badge-queued-text: #636c76;
+
+      --badge-running-bg: #ddf4ff;
+      --badge-running-text: #0969da;
+      --badge-running-border: #54aeff4d;
+
+      --badge-done-bg: #dafbe1;
+      --badge-done-text: #1a7f37;
+      --badge-done-border: #1a7f3726;
+
+      --badge-failed-bg: #ffebe9;
+      --badge-failed-text: #d1242f;
+      --badge-failed-border: #d1242f33;
     }
 
     *, *::before, *::after { transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
@@ -110,10 +142,29 @@
       letter-spacing: 0.3px;
     }
 
-    .badge-queued  { background: #21262d; color: var(--muted); border: 1px solid var(--border); }
-    .badge-running { background: #0d2340; color: var(--running); border: 1px solid #1f4070; }
-    .badge-done    { background: #0d2a0d; color: var(--success); border: 1px solid #1a4a1a; }
-    .badge-failed  { background: #2d0d0d; color: var(--danger);  border: 1px solid #4a1a1a; }
+    .badge-queued  { 
+      background: var(--badge-queued-bg); 
+      color: var(--badge-queued-text); 
+      border: 1px solid var(--border); 
+    }
+
+    .badge-running { 
+      background: var(--badge-running-bg); 
+      color: var(--badge-running-text); 
+      border: 1px solid var(--badge-running-border); 
+    }
+
+    .badge-done { 
+      background: var(--badge-done-bg); 
+      color: var(--badge-done-text); 
+      border: 1px solid var(--badge-done-border); 
+    }
+
+    .badge-failed { 
+      background: var(--badge-failed-bg); 
+      color: var(--badge-failed-text); 
+      border: 1px solid var(--badge-failed-border); 
+    }
 
     .btn {
       display: inline-block;
@@ -245,7 +296,7 @@
       border-radius: 6px;
       padding: 16px;
       font-size: 11px;
-      color: #adbac7;
+      color: var(--log-text);
       overflow-x: auto;
       white-space: pre-wrap;
       word-break: break-all;
@@ -259,7 +310,8 @@
 <body>
 <nav>
   <a href="/" class="nav-brand">GNPS<span>Local</span></a>
-  <a href="/">Jobs</a>
+  <a href="/">Home</a>
+  <a href="/jobs">Jobs</a>
   <a href="/submit/molecular_networking">Mol. Networking</a>
   <a href="/submit/fbmn">FBMN</a>
   <a href="/submit/mshub_gc">GC-MS</a>

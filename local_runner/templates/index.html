@@ -25,17 +25,18 @@
       </tr>
     </thead>
     <tbody id="job-table-body">
-      {% for job in jobs %}
-      <tr data-job-id="{{ job.id }}" data-status="{{ job.status }}">
+      {% for job in jobs | sort(attribute='created_at', reverse=True) %}
+      <tr data-job-id="{{ job.id }}"
+          data-status="{{ job.status }}"
+          data-started="{{ job.started_at or '' }}"
+          data-finished="{{ job.finished_at or '' }}">
         <td class="mono">{{ job.id }}</td>
         <td>{{ job.workflow | replace('_', ' ') | title }}</td>
         <td>
-          <span class="badge badge-{{ job.status }}">{{ job.status }}</span>
+          <span class="badge badge-{{ job.status }}">{{ job.status | upper }}</span>
         </td>
         <td class="muted">{{ job.created_at[:19] | replace('T', ' ') }}</td>
-        <td class="status-text muted">
-          {% if job.status == 'running' or job.status == 'queued' %}running...{% elif job.finished_at %}done{% else %}-{% endif %}
-        </td>
+        <td class="duration-cell muted">—</td>
         <td><a href="/job/{{ job.id }}" class="btn btn-ghost" style="padding:4px 10px; font-size:11px;">View</a></td>
       </tr>
       {% endfor %}
@@ -44,7 +45,7 @@
 </div>
 {% else %}
 <div class="card" style="text-align:center; padding:48px; color:var(--muted);">
-  No jobs yet. Submit a workflow above to get started.
+  No jobs yet. <a href="/" style="color:var(--accent);">Submit a workflow</a> to get started.
 </div>
 {% endif %}
 
@@ -53,49 +54,76 @@
 <script>
 const POLL_INTERVAL = 5000;
 let pollTimer = null;
+let durationTimer = null;
+
+function formatDuration(startIso, endIso) {
+  if (!startIso) return '—';
+  const start = new Date(startIso);
+  const end = endIso ? new Date(endIso) : new Date();
+  const totalSec = Math.floor((end - start) / 1000);
+  if (totalSec < 0) return '—';
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m`;
+  if (m > 0) return `${m}m ${String(s).padStart(2,'0')}s`;
+  return `${s}s`;
+}
+
+function updateDurations() {
+  document.querySelectorAll('tr[data-job-id]').forEach(row => {
+    const started  = row.dataset.started;
+    const finished = row.dataset.finished;
+    const status   = row.dataset.status;
+    const cell     = row.querySelector('.duration-cell');
+    if (!cell || !started) return;
+    // Show elapsed while running/queued, fixed total when done/failed
+    if (status === 'running' || status === 'queued') {
+      cell.textContent = formatDuration(started, null);
+    } else if (finished) {
+      cell.textContent = formatDuration(started, finished);
+    }
+  });
+}
 
 function updateJobStatuses() {
   if (document.hidden) return;
-
   fetch('/api/jobs')
     .then(res => res.json())
     .then(jobs => {
       let activeFound = false;
-
       jobs.forEach(job => {
         const row = document.querySelector(`tr[data-job-id="${job.id}"]`);
         if (!row) return;
-
         const isActive = job.status === 'running' || job.status === 'queued';
         if (isActive) activeFound = true;
-
-        // Only update DOM if status changed
-        const current = row.dataset.status;
-        if (current === job.status) return;
-        row.dataset.status = job.status;
-
+        if (row.dataset.status === job.status) return;
+        row.dataset.status  = job.status;
+        row.dataset.started  = job.started_at  || '';
+        row.dataset.finished = job.finished_at || '';
         const badge = row.querySelector('.badge');
-        badge.className = `badge badge-${job.status}`;
-        badge.textContent = job.status;
-
-        const statusCell = row.querySelector('.status-text');
-        statusCell.textContent = isActive ? 'running...' : 'done';
+        badge.className   = `badge badge-${job.status}`;
+        badge.textContent = job.status.toUpperCase();
       });
-
-      if (!activeFound && pollTimer) {
-        clearInterval(pollTimer);
-        pollTimer = null;
+      if (!activeFound) {
+        clearInterval(pollTimer);  pollTimer = null;
+        clearInterval(durationTimer); durationTimer = null;
       }
     })
     .catch(err => console.error('Polling error:', err));
 }
 
-const hasActiveOnLoad = document.querySelectorAll(
+// Initial duration render
+updateDurations();
+
+const hasActive = document.querySelectorAll(
   'tr[data-status="running"], tr[data-status="queued"]'
 ).length > 0;
 
-if (hasActiveOnLoad) {
-  pollTimer = setInterval(updateJobStatuses, POLL_INTERVAL);
+if (hasActive) {
+  // Update durations every second, poll status every 5s
+  durationTimer = setInterval(updateDurations, 1000);
+  pollTimer     = setInterval(updateJobStatuses, POLL_INTERVAL);
 }
 </script>
 {% endblock %}

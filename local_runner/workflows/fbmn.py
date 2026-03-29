@@ -34,7 +34,8 @@ if TYPE_CHECKING:
 WORKFLOW_BASE = Path("/mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows/feature-based-molecular-networking/tools/feature-based-molecular-networking")
 SCRIPTS = WORKFLOW_BASE / "scripts"
 BINARIES = WORKFLOW_BASE / "binaries"
-
+LIBSEARCH_BINARY = Path("/mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows/molecular-librarysearch-v2/tools/molecularsearch/main_execmodule.allcandidates")
+LOCAL_ANNOT_SCRIPT = Path(__file__).parent / "getGNPS_library_annotations_local.py"
 
 def run(job: "Job") -> bool:
     import sys
@@ -52,7 +53,7 @@ def run(job: "Job") -> bool:
         "GROUP_COUNT_AGGREGATE_METHOD": "Mean",
         "TOP_K_RESULTS": "1",
         "RUN_DEREPLICATOR": "0",
-        "PAIRS_MIN_COSINE": p.get("SCORE_THRESHOLD", "0.7"),
+        "PAIRS_MIN_COSINE": p.get("PAIRS_MIN_COSINE", "0.1"),
         "MAXIMUM_COMPONENT_SIZE": p.get("MAX_COMPONENT_SIZE", "100"),
         "tolerance.Ion_tolerance": p.get("TOLERANCE", "0.02"),
         "tolerance.PM_tolerance": p.get("TOLERANCE", "0.02"),
@@ -65,8 +66,16 @@ def run(job: "Job") -> bool:
         p.setdefault(k, v)
 
     # Locate required inputs
-    mgf_file = _find_input(input_dir, ["*.mgf"])
-    quant_table = _find_input(input_dir, ["*.csv", "*.txt", "*.tsv"], exclude="metadata")
+    all_inputs = sorted(input_dir.iterdir())
+    job.log(f"Input dir contents ({len(all_inputs)} items): {[f.name for f in all_inputs]}")
+
+    mgf_file = _find_input(input_dir, ["*.mgf", "*.MGF"])
+    quant_table = _find_input(
+        input_dir,
+        ["*.csv", "*.CSV", "*.txt", "*.TXT", "*.tsv", "*.TSV"],
+        exclude="metadata",
+        exclude_also=["*.mgf", "*.MGF"],
+    )
     metadata_file = _find_input(input_dir, ["*metadata*", "*metadata*.tsv", "*metadata*.txt"])
     library_dir = input_dir / "library" if (input_dir / "library").is_dir() else Path("/mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows/libraries")
 
@@ -95,12 +104,14 @@ def run(job: "Job") -> bool:
     networking_params_dir = out / "networking_parameters"
     networking_pairs_dir = out / "networking_pairs"
     libsearch_params_dir = out / "libsearch_params"
+    libanalogsearch_params_dir = out / "libanalogsearch_params"
     libsearch_results_dir = out / "libsearch_results"
     libanalogsearch_results_dir = out / "libanalogsearch_results"
     metadata_merged_dir = out / "metadata_merged"
 
     for d in [networking_params_dir, networking_pairs_dir, libsearch_params_dir,
-              libsearch_results_dir, libanalogsearch_results_dir, metadata_merged_dir]:
+              libanalogsearch_params_dir, libsearch_results_dir,
+              libanalogsearch_results_dir, metadata_merged_dir]:
         d.mkdir(exist_ok=True)
 
     # Output files
@@ -222,56 +233,66 @@ def run(job: "Job") -> bool:
     if not ok:
         return False
 
-    # ── Step 9: Network edges display ────────────────────────────────────────
-    job.run_step("network_edges_display", [
-        python, str(SCRIPTS / "create_network_edges_outputformatting.py"),
-        str(workflow_params_file),
-        str(clusterinfo_summary),   # placeholder, filled after step 12
-        str(networkedges_legacy),
-        str(networkedges_selfloop),
-        str(networkedges_display),
-        str(out / "networkedges_display_pairs.tsv"),
-        str(out / "networkedges_bidirectional.tsv"),
-    ])
-    # Non-fatal
-
     # ── Step 10: Library search ───────────────────────────────────────────────
-    if library_dir.exists() and any(library_dir.iterdir()):
-        job.log("Running library search")
+    if not LIBSEARCH_BINARY.exists():
+        job.log(f"WARNING: {LIBSEARCH_BINARY} not found — skipping library search")
+    elif library_dir.exists() and any(library_dir.iterdir()):
+        job.log(f"Running library search (binary: {LIBSEARCH_BINARY})")
         ok = job.run_step("library_search_prep", [
             python, str(SCRIPTS / "prep_molecular_librarysearch_parameters.py"),
-            str(validation_dir),
-            str(workflow_params_file),
             str(library_dir),
+            str(workflow_params_file),
             str(libsearch_params_dir),
-            str(out / "libanalogsearch_params"),
+            str(libanalogsearch_params_dir),
+            "--parallelism", "1",
         ])
-        (out / "libanalogsearch_params").mkdir(exist_ok=True)
 
         if ok:
+            any_search_ok = False
             for i, lpf in enumerate(sorted(libsearch_params_dir.glob("*"))):
-                job.run_step(f"library_search_{i}", [
-                    str(BINARIES / "main_execmodule"),
+                result_out = libsearch_results_dir / f"result_{i}.tsv"
+                step_ok = job.run_step(f"library_search_{i}", [
+                    str(LIBSEARCH_BINARY),
+                    "ExecSpectralLibrarySearchMolecular",
                     str(lpf),
-                    str(libsearch_results_dir / f"result_{i}.tsv"),
-                    str(spectra_filtered),
-                    str(library_dir),
+                    "-ccms_results_dir", str(result_out),
+                    "-ccms_searchspectra_name", str(spectra_filtered),
+                    "-ll", "9",
                 ])
-            job.run_step("merge_libsearch", [
-                python, str(SCRIPTS / "merge_tsv_files_efficient.py"),
-                str(libsearch_results_dir),
-                str(libsearch_merged),
-            ])
-            job.run_step("libsearch_db_annot", [
-                python, str(SCRIPTS / "getGNPS_library_annotations.py"),
-                str(libsearch_merged),
-                str(libsearch_db),
-            ])
+                if step_ok:
+                    any_search_ok = True
+            if any_search_ok:
+                job.run_step("merge_libsearch", [
+                    python, str(SCRIPTS / "merge_tsv_files_efficient.py"),
+                    str(libsearch_results_dir),
+                    str(libsearch_merged),
+                ])
+                merged_lines = libsearch_merged.read_text(errors="replace").splitlines() \
+                    if libsearch_merged.exists() else []
+                if len(merged_lines) > 1:
+                    annot_script = LOCAL_ANNOT_SCRIPT if LOCAL_ANNOT_SCRIPT.exists() \
+                        else SCRIPTS / "getGNPS_library_annotations.py"
+                    job.log(f"Running annotation via {annot_script.name}")
+                    annot_ok = job.run_step("libsearch_db_annot", [
+                        python, str(annot_script),
+                        str(libsearch_merged),
+                        str(libsearch_db),
+                        "--topk", p.get("TOP_K_RESULTS", "1"),
+                    ], timeout=300)
+                    if not annot_ok:
+                        job.log("WARNING: libsearch_db_annot failed/timed out — writing stub so pipeline can continue")
+                        _ensure_empty_libsearch_tsv(libsearch_db)
+                else:
+                    job.log("Library search produced no hits — writing empty results stub")
+                    _ensure_empty_libsearch_tsv(libsearch_db)
+            else:
+                job.log("All library search steps failed - writing stub")
     else:
         job.log("No library found, skipping library search")
 
-    _ensure_empty_file(libsearch_db)
-    _ensure_empty_file(libanalogsearch_db)
+    for _lsdb in (libsearch_db, libanalogsearch_db):
+        if not _lsdb.exists() or len(_lsdb.read_text(errors="replace").splitlines()) <= 1:
+            _ensure_empty_libsearch_tsv(_lsdb)
 
     # ── Step 11: Clusterinfo summary creation ─────────────────────────────────
     ok = job.run_step("clusterinfosummary_for_featurenetworks", [
@@ -285,13 +306,27 @@ def run(job: "Job") -> bool:
     if not ok:
         return False
 
+    # ── Step 9: Network edges display ────────────────────────────────────────
+    job.run_step("network_edges_display", [
+        python, str(SCRIPTS / "create_network_edges_outputformatting.py"),
+        str(workflow_params_file),
+        str(spectra_filtered),
+        str(clusterinfo_summary),   # placeholder, filled after step 12
+        str(networkedges_legacy),
+        str(networkedges_selfloop),
+        str(networkedges_display),
+        str(out / "networkedges_display_pairs.tsv"),
+    ])
+    # Step 9 depends on 11, hence moved
+    # Non-fatal
+
     # ── Step 12: Enrich clusterinfo summary ───────────────────────────────────
     ok = job.run_step("enrich_clusterinfo", [
         python, str(SCRIPTS / "enrich_clusterinfosummary.py"),
         str(workflow_params_file),
         str(clusterinfo_summary),
-        str(libsearch_db),
         str(networking_pairs_filtered),
+        str(libsearch_db),
         str(clusterinfo_enriched),
         str(components_table),
     ])
@@ -319,11 +354,26 @@ def run(job: "Job") -> bool:
     return True
 
 
-def _find_input(directory: Path, patterns: list, exclude: str = None) -> Path | None:
+def _find_input(directory: Path, patterns: list, exclude: str = None, exclude_also: list = None) -> Path | None:
+    import fnmatch
+    candidates = list(directory.iterdir())
     for pattern in patterns:
-        for f in directory.glob(pattern):
+        for f in candidates:
+            if not f.is_file():
+                continue
+            # Case-insensitive glob match
+            if not fnmatch.fnmatch(f.name.lower(), pattern.lower()):
+                continue
             if exclude and exclude.lower() in f.name.lower():
                 continue
+            if exclude_also:
+                skip = False
+                for xpat in exclude_also:
+                    if fnmatch.fnmatch(f.name.lower(), xpat.lower()):
+                        skip = True
+                        break
+                if skip:
+                    continue
             return f
     return None
 
@@ -339,6 +389,27 @@ def _write_workflow_params(path: Path, params: dict):
     path.write_text("\n".join(lines))
 
 
+_LIBSEARCH_HEADER = "\t".join([
+    "#Scan#", "SpectrumFile", "LibraryName", "MirrorLibraryName", "SpectrumID",
+    "Title", "Compound_Name", "Retention_Time", "MZErrorPPM", "SMILES", "InChI",
+    "InChIKey", "FormulaString", "IonMode", "Adduct", "ExactMass", "Precursor_MZ",
+    "SharedPeaks", "TotalPeaks", "MatchingScore", "NumPeaks",
+    
+    # API-named aliases read by enrich_clusterinfosummary.py
+    "MQScore", "Smiles", "INCHI",
+
+    # Additional columns read by molecular_network_filtering_library.py
+    "MassDiff", "tags", "Library_Class", "Instrument",
+    "Ion_Source", "PI", "Data_Collector", "Compound_Source",
+])
+def _ensure_empty_libsearch_tsv(path: Path):
+    """Write a valid header-only library search TSV. Always overwrites to prevent
+    stale/corrupt content from a prior failed run causing downstream KeyError crashes."""
+    path.write_text(_LIBSEARCH_HEADER + "\n")
+
 def _ensure_empty_file(path: Path):
     if not path.exists():
-        path.touch()
+        if "librarysearch" in path.name:
+            _ensure_empty_libsearch_tsv(path)
+        else:
+            path.touch()

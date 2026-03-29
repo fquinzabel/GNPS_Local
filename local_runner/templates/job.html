@@ -4,7 +4,7 @@
 
 <div style="display:flex; align-items:center; gap:16px; margin-bottom:4px;">
   <h1>Job {{ job.id }}</h1>
-  <span class="badge badge-{{ job.status }}" id="status-badge">{{ job.status }}</span>
+  <span class="badge badge-{{ job.status }}" id="status-badge">{{ job.status | upper }}</span>
 </div>
 <p class="subtitle">{{ job.workflow | replace('_', ' ') | title }} &nbsp;·&nbsp; Started {{ job.created_at[:19] | replace('T', ' ') }}</p>
 
@@ -78,7 +78,7 @@ async function fetchLog() {
 async function fetchStatus() {
   const r = await fetch(`/api/job/${jobId}`);
   const d = await r.json();
-  badgeEl.textContent = d.status;
+  badgeEl.textContent = d.status.toUpperCase();
   badgeEl.className = `badge badge-${d.status}`;
   lastStatus = d.status;
   return d.status === 'running' || d.status === 'queued';
