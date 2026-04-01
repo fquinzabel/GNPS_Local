@@ -158,10 +158,12 @@ async def submit_fbmn(
     METADATA_COLUMN: str = Form(""),
     METADATA_CONDITION_ONE: str = Form(""),
     METADATA_CONDITION_TWO: str = Form(""),
+    JOB_NAME: str = Form(""),
     library: Optional[UploadFile] = File(default=None),
     metadata_table: Optional[UploadFile] = File(default=None),
 ):
     params = {
+        "JOB_NAME": JOB_NAME,
         "QUANT_TABLE_SOURCE": QUANT_TABLE_SOURCE,
         "TOLERANCE": str(TOLERANCE),
         "MIN_MATCHED_PEAKS": str(MIN_MATCHED_PEAKS),
