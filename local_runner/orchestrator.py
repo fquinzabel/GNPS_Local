@@ -9,6 +9,7 @@ import json
 import subprocess
 import threading
 import traceback
+import psutil
 from datetime import datetime
 from pathlib import Path
 from enum import Enum
@@ -27,6 +28,7 @@ class JobStatus(str, Enum):
     RUNNING = "running"
     DONE = "done"
     FAILED = "failed"
+    CANCELED = "canceled"
 
 
 class Job:
@@ -49,6 +51,8 @@ class Job:
         self.job_dir.mkdir(parents=True, exist_ok=True)
         self.input_dir.mkdir(exist_ok=True)
         self.output_dir.mkdir(exist_ok=True)
+
+        self.process: Optional[subprocess.Popen] = None
 
         self._save_state()
 
@@ -79,28 +83,57 @@ class Job:
         self.log(f"--- STEP: {step_name} ---")
         self.log(f"CMD: {' '.join(str(c) for c in cmd)}")
         try:
-            result = subprocess.run(
+            self.process = subprocess.Popen(
                 cmd,
                 cwd=str(cwd or REPO_ROOT),
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
-                timeout=timeout,  # Customizable timeout per step
+                start_new_session=True
             )
-            if result.stdout:
-                self.log(result.stdout)
-            if result.stderr:
-                self.log(f"STDERR: {result.stderr}")
-            if result.returncode != 0:
-                self.log(f"STEP FAILED (exit {result.returncode})")
+
+            try:
+                stdout, stderr = self.process.communicate(timeout=timeout)
+
+                if stdout:
+                    self.log(stdout)
+                if stderr:
+                    self.log(f"STDERR: {stderr}")
+                if self.process.returncode != 0:
+                    if self.status == JobStatus.CANCELED:
+                        self.log("STEP TERMINATED BY USER")
+                        return False
+                    self.log(f"STEP FAILED (exit {self.process.returncode})")
+                    return False
+                self.log(f"STEP OK")
+                return True
+            except subprocess.TimeoutExpired:
+                self.log(f"STEP TIMED OUT after {timeout} seconds. Killing process group...")
+                self.kill_job(reason="Timeout")
                 return False
-            self.log(f"STEP OK")
-            return True
-        except subprocess.TimeoutExpired:
-            self.log(f"STEP TIMED OUT after {timeout} seconds")
-            return False
         except Exception as e:
-            self.log(f"STEP ERROR: {e}")
+            self.log(f"STEP EXECUTION ERROR: {e}")
             return False
+        finally:
+            self.process = None
+
+    def kill_job(self, reason: str = "Killed by user"):
+        """Force-kill the current process and all its children."""
+        if self.process and self.process.poll() is None:
+            try:
+                # Use psutil to kill the whole process tree (important for WSL/Shell scripts)
+                parent = psutil.Process(self.process.pid)
+                for child in parent.children(recursive=True):
+                    child.kill()
+                parent.kill()
+                self.log(f"Process {self.process.pid} and children terminated.")
+            except psutil.NoSuchProcess:
+                pass
+            
+        self.status = JobStatus.CANCELED if "user" in reason.lower() else JobStatus.FAILED
+        self.error = reason
+        self.finished_at = datetime.now().isoformat()
+        self._save_state()
 
     def mark_running(self):
         self.status = JobStatus.RUNNING
@@ -108,15 +141,17 @@ class Job:
         self._save_state()
 
     def mark_done(self):
-        self.status = JobStatus.DONE
-        self.finished_at = datetime.now().isoformat()
-        self._save_state()
+        if self.status != JobStatus.CANCELED:
+            self.status = JobStatus.DONE
+            self.finished_at = datetime.now().isoformat()
+            self._save_state()
 
     def mark_failed(self, error: str):
-        self.status = JobStatus.FAILED
-        self.finished_at = datetime.now().isoformat()
-        self.error = error
-        self._save_state()
+        if self.status != JobStatus.CANCELED:
+            self.status = JobStatus.FAILED
+            self.finished_at = datetime.now().isoformat()
+            self.error = error
+            self._save_state()
 
 
 # In-memory job registry (single-user, no DB needed)

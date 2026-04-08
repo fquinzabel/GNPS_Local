@@ -87,6 +87,18 @@ async def download_file(job_id: str, filename: str):
         raise HTTPException(404, "File not found")
     return FileResponse(str(file_path), filename=file_path.name)
 
+@app.post("/api/job/{job_id}/cancel")
+async def cancel_job(job_id: str):
+    job = orc.get_job(job_id)
+    if not job:
+        raise HTTPException(404, "Job not found")
+    
+    if job.status not in [orc.JobStatus.RUNNING, orc.JobStatus.QUEUED]:
+        return {"status": "error", "message": "Only running or queued jobs can be canceled"}
+    
+    job.kill_job(reason="Killed by user")
+    return {"status": "canceled", "job_id": job_id}
+
 
 # ── Submit endpoints ───────────────────────────────────────────────────────────
 

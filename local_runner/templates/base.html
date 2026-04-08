@@ -37,6 +37,10 @@
       --badge-failed-bg: #2d0d0d;
       --badge-failed-text: #f85149;
       --badge-failed-border: #4a1a1a;
+
+      --badge-canceled-bg: var(--badge-failed-bg);
+      --badge-canceled-text: var(--badge-failed-text);
+      --badge-canceled-border: var(--badge-failed-border);
     }
 
     :root[data-theme="light"] {
@@ -68,6 +72,10 @@
       --badge-failed-bg: #ffebe9;
       --badge-failed-text: #d1242f;
       --badge-failed-border: #d1242f33;
+
+      --badge-canceled-bg: var(--badge-failed-bg);
+      --badge-canceled-text: var(--badge-failed-text);
+      --badge-canceled-border: var(--badge-failed-border);
     }
 
     *, *::before, *::after { transition: background-color 0.2s, border-color 0.2s, color 0.2s; }
@@ -166,6 +174,12 @@
       border: 1px solid var(--badge-failed-border); 
     }
 
+    .badge-canceled { 
+      background: var(--badge-canceled-bg); 
+      color: var(--badge-canceled-text); 
+      border: 1px solid var(--badge-canceled-border); 
+    }
+
     .btn {
       display: inline-block;
       padding: 7px 16px;
@@ -194,6 +208,11 @@
     }
 
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-danger:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 0 0 3px rgba(248, 81, 73, 0.4);
+    }
 
     label {
       display: block;

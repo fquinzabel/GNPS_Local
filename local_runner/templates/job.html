@@ -5,6 +5,10 @@
 <div style="display:flex; align-items:center; gap:16px; margin-bottom:4px;">
   <h1>Job {{ job.id }}</h1>
   <span class="badge badge-{{ job.status }}" id="status-badge">{{ job.status | upper }}</span>
+
+  <div id="cancel-zone" {% if job.status not in ['queued', 'running'] %}style="display:none;"{% endif %}>
+    <button class="btn btn-danger" onclick="cancelJob()">Cancel Job</button>
+  </div>
 </div>
 <p class="subtitle">{{ job.workflow | replace('_', ' ') | title }} &nbsp;·&nbsp; Started {{ job.created_at[:19] | replace('T', ' ') }}</p>
 
@@ -64,6 +68,7 @@ const jobId = "{{ job.id }}";
 const logEl = document.getElementById('log-output');
 const badgeEl = document.getElementById('status-badge');
 const tsEl = document.getElementById('log-ts');
+const cancelZone = document.getElementById('cancel-zone');
 let lastStatus = "{{ job.status }}";
 
 async function fetchLog() {
@@ -82,6 +87,44 @@ async function fetchStatus() {
   badgeEl.className = `badge badge-${d.status}`;
   lastStatus = d.status;
   return d.status === 'running' || d.status === 'queued';
+}
+
+async function cancelJob() {
+  if (!confirm("Are you sure you want to cancel this job? This will stop all current processing.")) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/job/${jobId}/cancel`, { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (response.ok) {
+      window.location.reload();
+    } else {
+      const err = await response.json();
+      alert("Error cancelling job: " + (err.detail || "Unknown error"));
+    }
+  } catch (e) {
+    alert("Network error occurred while trying to cancel.");
+  }
+}
+
+async function fetchStatus() {
+  const r = await fetch(`/api/job/${jobId}`);
+  const d = await r.json();
+  
+  badgeEl.textContent = d.status.toUpperCase();
+  badgeEl.className = `badge badge-${d.status}`;
+
+  const isActive = d.status === 'running' || d.status === 'queued';
+  if (!isActive) {
+    cancelZone.style.display = 'none';
+  }
+  
+  lastStatus = d.status;
+  return isActive;
 }
 
 async function fetchFiles() {
