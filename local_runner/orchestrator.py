@@ -153,6 +153,15 @@ class Job:
             self.error = error
             self._save_state()
 
+    def reset_for_restart(self):
+        """Reset job state to QUEUED so it can be re-run with the same inputs and params."""
+        self.status = JobStatus.QUEUED
+        self.started_at = None
+        self.finished_at = None
+        self.error = None
+        self.process = None
+        self._save_state()
+
 
 # In-memory job registry (single-user, no DB needed)
 _jobs: dict[str, Job] = {}
@@ -240,7 +249,7 @@ def get_output_files(job_id: str) -> list[dict]:
 
 def _run_job(job: Job):
     """Dispatch job to the correct workflow runner."""
-    from workflows import molecular_networking, fbmn, mshub_gc
+    from workflows import molecular_networking, fbmn, mshub_gc, mcn
 
     job.mark_running()
     job.log(f"Starting workflow: {job.workflow}")
@@ -250,6 +259,7 @@ def _run_job(job: Job):
             "molecular_networking": molecular_networking.run,
             "fbmn": fbmn.run,
             "mshub_gc": mshub_gc.run,
+            "mcn": mcn.run,
         }
         runner = runners.get(job.workflow)
         if not runner:

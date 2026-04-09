@@ -9,6 +9,10 @@
   <div id="cancel-zone" {% if job.status not in ['queued', 'running'] %}style="display:none;"{% endif %}>
     <button class="btn btn-danger" onclick="cancelJob()">Cancel Job</button>
   </div>
+
+  <div id="restart-zone" {% if job.status not in ['done', 'failed', 'canceled'] %}style="display:none;"{% endif %}>
+    <button class="btn btn-primary" onclick="restartJob()">Restart Job</button>
+  </div>
 </div>
 <p class="subtitle">{{ job.workflow | replace('_', ' ') | title }} &nbsp;·&nbsp; Started {{ job.created_at[:19] | replace('T', ' ') }}</p>
 
@@ -69,6 +73,7 @@ const logEl = document.getElementById('log-output');
 const badgeEl = document.getElementById('status-badge');
 const tsEl = document.getElementById('log-ts');
 const cancelZone = document.getElementById('cancel-zone');
+const restartZone = document.getElementById('restart-zone');
 let lastStatus = "{{ job.status }}";
 
 async function fetchLog() {
@@ -111,6 +116,29 @@ async function cancelJob() {
   }
 }
 
+async function restartJob() {
+  if (!confirm("Restart this job? This will clear previous logs and output files while keeping the same parameters.")) {
+    return;
+  }
+
+  try {
+    // This assumes your backend has a /restart endpoint for the job
+    const response = await fetch(`/api/job/${jobId}/restart`, { 
+      method: 'POST'
+    });
+    
+    if (response.ok) {
+      // Reload to reset the UI state and begin polling again
+      window.location.reload();
+    } else {
+      const err = await response.json();
+      alert("Error restarting job: " + (err.detail || "Unknown error"));
+    }
+  } catch (e) {
+    alert("Network error occurred while trying to restart.");
+  }
+}
+
 async function fetchStatus() {
   const r = await fetch(`/api/job/${jobId}`);
   const d = await r.json();
@@ -119,9 +147,8 @@ async function fetchStatus() {
   badgeEl.className = `badge badge-${d.status}`;
 
   const isActive = d.status === 'running' || d.status === 'queued';
-  if (!isActive) {
-    cancelZone.style.display = 'none';
-  }
+  cancelZone.style.display = isActive ? 'block' : 'none';
+  restartZone.style.display = isActive ? 'none' : 'block';
   
   lastStatus = d.status;
   return isActive;
