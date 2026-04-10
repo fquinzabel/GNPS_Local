@@ -39,6 +39,16 @@
     <a href="/submit/mshub_gc" class="btn btn-ghost" style="text-align:center;">Launch</a>
   </div>
 
+  <div class="card" style="display:flex; flex-direction:column; justify-content:space-between; gap:20px;">
+    <div>
+      <div style="font-size:15px; font-weight:600; margin-bottom:10px;">Molecular Community Networking</div>
+      <p style="font-size:12px; color:var(--muted); line-height:1.8; margin:0;">
+        Info
+      </p>
+    </div>
+    <a href="/submit/mcn" class="btn btn-primary" style="text-align:center;">Launch</a>
+  </div>
+
 </div>
 
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -77,6 +87,7 @@ function renderRecentJobs(jobs) {
     const dur = formatDuration(job.started_at, job.finished_at) || '—';
     const wf  = job.workflow.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
     return `<tr>
+      <td>${job.params.JOB_NAME || '—'}</td>
       <td class="mono">${job.id}</td>
       <td>${wf}</td>
       <td><span class="badge badge-${job.status}">${job.status.toUpperCase()}</span></td>
@@ -87,7 +98,7 @@ function renderRecentJobs(jobs) {
   }).join('');
   container.innerHTML = `<div class="card" style="padding:0;">
     <table><thead><tr>
-      <th>Job ID</th><th>Workflow</th><th>Status</th><th>Created</th><th>Duration</th><th></th>
+      <th>Job Name</th><th>Job ID</th><th>Workflow</th><th>Status</th><th>Created</th><th>Duration</th><th></th>
     </tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 

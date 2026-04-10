@@ -336,7 +336,7 @@ def run(job: "Job") -> bool:
     # ── Step 13: Convert to GraphML ───────────────────────────────────────────
     ok = job.run_step("convert_graphml", [
         python, str(SCRIPTS / "convert_networks_to_graphml.py"),
-        str(networking_pairs_filtered),
+        str(networkedges_selfloop),
         str(clusterinfo_enriched),
         str(libsearch_db),
         str(graphml_file),
@@ -344,13 +344,38 @@ def run(job: "Job") -> bool:
     ])
     if not ok:
         return False
+    
+    # ── Step 14: Molecular Community Networking (optional) ───────────────────
+    if p.get("MOLECULAR_COMMUNITY_NETWORKING") == "1":
+        from workflows import mcn as mcn_module
+
+        class _MCNJob:
+            def __init__(self):
+                self.params = {
+                    "MCN_K": p.get("MCN_K", "20"),
+                    "MCN_C": p.get("MCN_C", "0.75"),
+                    "MCN_SEED": p.get("MCN_SEED", "123"),
+                }
+                self.input_dir = out
+                self.output_dir = out
+                self.log = job.log
+
+        ok = mcn_module.run(_MCNJob())
+        if not ok:
+            return False
+
+        job.log(f"MCN outputs written to: {out / 'mcn'}")
 
     job.log("Key outputs:")
-    job.log(f"  GraphML network:        {graphml_file}")
-    job.log(f"  Clusterinfo enriched:   {clusterinfo_enriched}")
-    job.log(f"  Network edges:          {networkedges_selfloop}")
-    job.log(f"  Library search results: {libsearch_db}")
-    job.log(f"  Quant table reformatted:{quant_reformatted}")
+    job.log(f"  GraphML network:            {graphml_file}")
+    if p.get("MOLECULAR_COMMUNITY_NETWORKING") == "1":
+        job.log(f"  MCN full graph:             {out / 'gnps_mcn.graphml'}")
+        job.log(f"  MCN cut graph:              {out / 'gnps_mcn_cut.graphml'}")
+        job.log(f"  MCN spanning tree:          {out / 'gnps_mcn_spanning_tree.graphml'}")
+    job.log(f"  Clusterinfo enriched:       {clusterinfo_enriched}")
+    job.log(f"  Network edges:              {networkedges_selfloop}")
+    job.log(f"  Library search results:     {libsearch_db}")
+    job.log(f"  Quant table reformatted:    {quant_reformatted}")
     return True
 
 

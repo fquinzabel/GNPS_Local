@@ -37,7 +37,7 @@ async def jobs_page(request: Request):
 
 @app.get("/submit/{workflow}", response_class=HTMLResponse)
 async def submit_page(request: Request, workflow: str):
-    if workflow not in ("molecular_networking", "fbmn", "mshub_gc"):
+    if workflow not in ("molecular_networking", "fbmn", "mshub_gc", "mcn"):
         raise HTTPException(404, "Unknown workflow")
     return templates.TemplateResponse(f"submit_{workflow}.html", {"request": request})
 
@@ -99,6 +99,34 @@ async def cancel_job(job_id: str):
     job.kill_job(reason="Killed by user")
     return {"status": "canceled", "job_id": job_id}
 
+@app.post("/api/job/{job_id}/restart")
+async def restart_job(job_id: str):
+    job = orc.get_job(job_id)
+    if not job:
+        raise HTTPException(404, "Job not found")
+
+    # 1. Validation: only allow restart on terminal states
+    if job.status not in [orc.JobStatus.DONE, orc.JobStatus.FAILED, orc.JobStatus.CANCELED]:
+        raise HTTPException(400, "Only done, failed, or canceled jobs can be restarted.")
+
+    # 2. Cleanup: clear output directory and log file
+    #    Input directory is preserved — same files, same params, same job id
+    try:
+        if job.output_dir.exists():
+            shutil.rmtree(job.output_dir)
+        job.output_dir.mkdir(exist_ok=True)
+
+        if job.log_file.exists():
+            job.log_file.write_text("")
+
+    except Exception as e:
+        raise HTTPException(500, f"Failed to clean up job directories: {str(e)}")
+
+    # 3. Reset job state to QUEUED, then start
+    job.reset_for_restart()
+    orc.start_job(job)
+
+    return {"status": "restarted", "job_id": job_id}
 
 # ── Submit endpoints ───────────────────────────────────────────────────────────
 
@@ -171,6 +199,9 @@ async def submit_fbmn(
     METADATA_CONDITION_ONE: str = Form(""),
     METADATA_CONDITION_TWO: str = Form(""),
     JOB_NAME: str = Form(""),
+    MOLECULAR_COMMUNITY_NETWORKING: str = Form("0"),
+    MCN_K: float = Form(20.0),
+    MCN_C: float = Form(0.75),
     library: Optional[UploadFile] = File(default=None),
     metadata_table: Optional[UploadFile] = File(default=None),
 ):
@@ -194,6 +225,9 @@ async def submit_fbmn(
         "METADATA_COLUMN": METADATA_COLUMN,
         "METADATA_CONDITION_ONE": METADATA_CONDITION_ONE,
         "METADATA_CONDITION_TWO": METADATA_CONDITION_TWO,
+        "MOLECULAR_COMMUNITY_NETWORKING": MOLECULAR_COMMUNITY_NETWORKING,
+        "MCN_K": str(MCN_K),
+        "MCN_C": str(MCN_C),
     }
     job = orc.create_job("fbmn", params)
     await _save_uploads(job, input_spectra, subfolder=None)
@@ -230,6 +264,20 @@ async def submit_mshub_gc(
     orc.start_job(job)
     return {"job_id": job.id, "status": job.status}
 
+@app.post("/api/submit/mcn")
+async def submit_mcn(
+    input_spectra: List[UploadFile] = File(...),
+    MCN_K: float = Form(20.0),
+    MCN_C: float = Form(0.75),
+):
+    params = {
+        "MCN_K": str(MCN_K),
+        "MCN_C": str(MCN_C),
+    }
+    job = orc.create_job("mcn", params)
+    await _save_uploads(job, input_spectra, subfolder=None)
+    orc.start_job(job)
+    return {"job_id": job.id, "status": job.status}
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 

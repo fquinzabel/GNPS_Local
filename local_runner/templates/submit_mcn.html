@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}MCN — GNPS Local{% endblock %}
+{% block content %}
+
+<h1>Molecular Community Networking</h1>
+<p class="subtitle">MCN: info</p>
+
+<form id="submit-form" enctype="multipart/form-data">
+<div class="card">
+
+  <div class="form-section-title">Input GraphML (required)</div>
+  <div class="file-drop">
+    <input type="file" name="input_spectra" multiple accept=".graphml">
+    <div>Drop GraphML file here or click to browse</div>
+    <div style="font-size:11px; margin-top:4px; color:var(--muted)">Accepts .graphml · Only one file allowed</div>
+  </div>
+  <div class="file-list"></div>
+  <div class="hint">GraphML must be generated using the following parameters:</div>
+  <div class="hint">- Cosine Score between 0 and 0.1</div>
+  <div class="hint">- TopK value from 100 to 10,000</div>
+  <div class="hint">- Max Component Size of 0</div>
+  <div class="form-section-title">Sigmoid Parameters</div>
+  <div class="form-grid">
+    <div id="mcn-params", class="form-grid-hidden">
+      <div>
+        <label>Sigmoid Steepness (K)</label>
+        <input type="number" name="MCN_K" value="20" step="1" min="1" max="100">
+        <div class="hint">Controls how sharply the sigmoid transitions around the midpoint. Default: 20</div>
+      </div>
+      <div>
+        <label>Sigmoid Midpoint (C)</label>
+        <input type="number" name="MCN_C" value="0.75" step="0.01" min="0" max="1">
+        <div class="hint">Cosine score at the inflection point of the sigmoid. Default: 0.75</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:28px; display:flex; gap:12px; align-items:center;">
+    <button type="submit" class="btn btn-primary" id="submit-btn">Submit Job</button>
+    <a href="/" class="btn btn-ghost">Cancel</a>
+    <span id="submit-status" style="font-size:12px; color:var(--muted);"></span>
+  </div>
+</form>
+
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('submit-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const status = document.getElementById('submit-status');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  const data = new FormData(e.target);
+  try {
+    const r = await fetch('/api/submit/mcn', { method: 'POST', body: data });
+    const d = await r.json();
+    if (r.ok) window.location.href = `/job/${d.job_id}`;
+    else { status.textContent = d.detail || 'Submission failed'; btn.disabled = false; btn.textContent = 'Submit Job'; }
+  } catch(err) {
+    status.textContent = 'Network error: ' + err.message;
+    btn.disabled = false; btn.textContent = 'Submit Job';
+  }
+});
+</script>
+{% endblock %}
