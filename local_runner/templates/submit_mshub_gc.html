@@ -11,10 +11,11 @@
   <div class="form-section-title">Input Spectra (required)</div>
   <div class="file-drop">
     <input type="file" name="input_spectra" multiple accept=".mzML,.mzml,.CDF,.cdf,.netCDF">
-    <div>Drop GC-MS files here or click to browse</div>
-    <div style="font-size:11px; margin-top:4px; color:var(--muted)">Accepts .mzML, .CDF, .netCDF · Multiple files allowed</div>
+    <div class="file-placeholder">Drop GC-MS files here or click to browse<br>
+      Accepts .mzML, .CDF, .netCDF · Multiple files allowed
+    </div>
+    <div class="file-list"></div>
   </div>
-  <div class="file-list"></div>
 
   <div class="form-section-title">Preprocessing Parameters</div>
   <div class="form-grid">
@@ -49,6 +50,14 @@
     </div>
   </div>
 
+  <div class="form-section-title">Optional Inputs</div>
+  <div class="form-grid" style="margin-bottom: 20px;">
+    <div style="grid-column: span 2;">
+      <label>Job Name</label>
+      <input type="text" name="JOB_NAME" placeholder="Enter a custom name for this job..." style="width: 100%;">
+    </div>
+  </div>
+
   <div style="margin-top:28px; display:flex; gap:12px; align-items:center;">
     <button type="submit" class="btn btn-primary" id="submit-btn">Submit Job</button>
     <a href="/" class="btn btn-ghost">Cancel</a>
@@ -60,6 +69,29 @@
 {% endblock %}
 {% block scripts %}
 <script>
+
+document.addEventListener('change', e => {
+  const input = e.target;
+  if (input.type !== 'file') return;
+
+  const drop = input.closest('.file-drop');
+  if (!drop) return;
+ 
+  const placeholder = drop.querySelector('.file-placeholder');
+  const fileList    = drop.querySelector('.file-list');
+  const files       = Array.from(input.files);
+ 
+  if (files.length === 0) {
+    placeholder.style.display = 'block';
+    fileList.style.display    = 'none';
+    fileList.innerHTML        = '';
+  } else {
+    placeholder.style.display = 'none';
+    fileList.style.display    = 'block';
+    fileList.innerHTML        = files.map(f => `<div>${f.name}</div>`).join('');
+  }
+});
+
 document.getElementById('submit-form').addEventListener('submit', async e => {
   e.preventDefault();
   const btn = document.getElementById('submit-btn');

@@ -11,10 +11,11 @@
   <div class="form-section-title">Input Spectra (required)</div>
   <div class="file-drop" id="spectra-drop">
     <input type="file" name="input_spectra" multiple accept=".mgf,.mzML,.mzXML">
-    <div>Drop MGF / mzML files here or click to browse</div>
-    <div style="font-size:11px; margin-top:4px; color:var(--muted)">Accepts .mgf, .mzML, .mzXML · Multiple files allowed</div>
+    <div class="file-placeholder">Drop MGF / mzML files here or click to browse<br>
+      Accepts .mgf, .mzML, .mzXML · Multiple files allowed
+    </div>
+    <div class="file-list"></div>
   </div>
-  <div class="file-list"></div>
 
   <div class="form-section-title">Networking Parameters</div>
   <div class="form-grid">
@@ -89,33 +90,40 @@
 
   <div class="form-section-title">Optional Inputs</div>
 
+  <div class="form-grid" style="margin-bottom: 20px;">
+    <div style="grid-column: span 2;">
+      <label>Job Name</label>
+      <input type="text" name="JOB_NAME" placeholder="Enter a custom name for this job..." style="width: 100%;">
+    </div>
+  </div>
+
   <label>Library Files (.mgf) — leave empty to use /libraries/ folder</label>
   <div class="file-drop">
     <input type="file" name="library" multiple accept=".mgf">
-    <div>Drop spectral library MGF files here or click to browse</div>
+    <div class="file-placeholder">Drop spectral library MGF files here or click to browse</div>
+    <div class="file-list"></div>
   </div>
-  <div class="file-list"></div>
 
   <label>Group Mapping (.csv)</label>
   <div class="file-drop">
     <input type="file" name="groupmapping" accept=".csv,.txt">
-    <div>Drop group mapping file or click to browse</div>
+    <div class="file-placeholder">Drop group mapping file or click to browse</div>
+    <div class="file-list"></div>
   </div>
-  <div class="file-list"></div>
 
   <label>Attribute Mapping (.csv)</label>
   <div class="file-drop">
     <input type="file" name="attributemapping" accept=".csv,.txt">
-    <div>Drop attribute mapping file or click to browse</div>
+    <div class="file-placeholder">Drop attribute mapping file or click to browse</div>
+    <div class="file-list"></div>
   </div>
-  <div class="file-list"></div>
 
   <label>Metadata File (.tsv)</label>
   <div class="file-drop">
     <input type="file" name="metadatafile" accept=".tsv,.txt,.csv">
-    <div>Drop metadata file or click to browse</div>
+    <div class="file-placeholder">Drop metadata file or click to browse</div>
+    <div class="file-list"></div>
   </div>
-  <div class="file-list"></div>
 
   <div style="margin-top:28px; display:flex; gap:12px; align-items:center;">
     <button type="submit" class="btn btn-primary" id="submit-btn">Submit Job</button>
@@ -128,6 +136,29 @@
 {% endblock %}
 {% block scripts %}
 <script>
+
+document.addEventListener('change', e => {
+  const input = e.target;
+  if (input.type !== 'file') return;
+
+  const drop = input.closest('.file-drop');
+  if (!drop) return;
+ 
+  const placeholder = drop.querySelector('.file-placeholder');
+  const fileList    = drop.querySelector('.file-list');
+  const files       = Array.from(input.files);
+ 
+  if (files.length === 0) {
+    placeholder.style.display = 'block';
+    fileList.style.display    = 'none';
+    fileList.innerHTML        = '';
+  } else {
+    placeholder.style.display = 'none';
+    fileList.style.display    = 'block';
+    fileList.innerHTML        = files.map(f => `<div>${f.name}</div>`).join('');
+  }
+});
+
 const mcnSelect = document.querySelector('[name="MOLECULAR_COMMUNITY_NETWORKING"]');
 const scoreInput = document.querySelector('[name="SCORE_THRESHOLD"]');
 const topkInput = document.querySelector('[name="TOPK"]');
