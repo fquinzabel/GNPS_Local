@@ -31,10 +31,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from orchestrator import Job
 
-WORKFLOW_BASE = Path("/mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows/feature-based-molecular-networking/tools/feature-based-molecular-networking")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+WORKFLOW_BASE = REPO_ROOT / "feature-based-molecular-networking" / "tools" / "feature-based-molecular-networking"
 SCRIPTS = WORKFLOW_BASE / "scripts"
 BINARIES = WORKFLOW_BASE / "binaries"
-LIBSEARCH_BINARY = Path("/mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows/molecular-librarysearch-v2/tools/molecularsearch/main_execmodule.allcandidates")
+LIBSEARCH_BINARY = REPO_ROOT / "molecular-librarysearch-v2" / "tools" / "molecularsearch" / "main_execmodule.allcandidates"
 LOCAL_ANNOT_SCRIPT = Path(__file__).parent / "getGNPS_library_annotations_local.py"
 
 def run(job: "Job") -> bool:
@@ -55,8 +56,8 @@ def run(job: "Job") -> bool:
         "RUN_DEREPLICATOR": "0",
         "PAIRS_MIN_COSINE": p.get("PAIRS_MIN_COSINE", "0.1"),
         "MAXIMUM_COMPONENT_SIZE": p.get("MAX_COMPONENT_SIZE", "100"),
-        "tolerance.Ion_tolerance": p.get("TOLERANCE", "0.02"),
-        "tolerance.PM_tolerance": p.get("TOLERANCE", "0.02"),
+        "tolerance.Ion_tolerance": p.get("TOLERANCE_ION", "0.02"),
+        "tolerance.PM_tolerance": p.get("TOLERANCE_PM", "0.02"),
         "workflow": "FEATURE-BASED-MOLECULAR-NETWORKING",
         "workflow_version": "local",
         "task": "local",
@@ -77,8 +78,9 @@ def run(job: "Job") -> bool:
         exclude_also=["*.mgf", "*.MGF"],
     )
     metadata_file = _find_input(input_dir, ["*metadata*", "*metadata*.tsv", "*metadata*.txt"])
-    library_dir = input_dir / "library" if (input_dir / "library").is_dir() else Path("/mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows/libraries")
-
+    library_dir = input_dir / "library" if (input_dir / "library").is_dir() \
+    else REPO_ROOT / "libraries"
+    
     if not mgf_file:
         job.log("ERROR: No MGF file found in input directory")
         return False
@@ -204,7 +206,7 @@ def run(job: "Job") -> bool:
         pairs_out = networking_pairs_dir / f"pairs_{i}.aligns"
         ok = job.run_step(f"networking_pairs_{i}", [
             python,
-            str(Path("/mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows/metabolomics-snets-v2/tools/metabolomicsnetsv2/scripts/molecular_networking_parallel_step_wrapper.py")),
+            str(Path(REPO_ROOT) / "metabolomics-snets-v2" / "tools" / "metabolomicsnetsv2" / "scripts" / "molecular_networking_parallel_step_wrapper.py"),
             str(pf),
             str(pairs_out),
             str(spectra_filtered),
@@ -236,7 +238,7 @@ def run(job: "Job") -> bool:
     # ── Step 10: Library search ───────────────────────────────────────────────
     if not LIBSEARCH_BINARY.exists():
         job.log(f"WARNING: {LIBSEARCH_BINARY} not found — skipping library search")
-    elif library_dir.exists() and any(library_dir.iterdir()):
+    elif library_dir.exists() and any(f.is_file() for f in library_dir.rglob("*")):
         job.log(f"Running library search (binary: {LIBSEARCH_BINARY})")
         ok = job.run_step("library_search_prep", [
             python, str(SCRIPTS / "prep_molecular_librarysearch_parameters.py"),
@@ -288,7 +290,7 @@ def run(job: "Job") -> bool:
             else:
                 job.log("All library search steps failed - writing stub")
     else:
-        job.log("No library found, skipping library search")
+        job.log("No library found, ensure library files are flat and are not nested in subdirectories, skipping library search")
 
     for _lsdb in (libsearch_db, libanalogsearch_db):
         if not _lsdb.exists() or len(_lsdb.read_text(errors="replace").splitlines()) <= 1:

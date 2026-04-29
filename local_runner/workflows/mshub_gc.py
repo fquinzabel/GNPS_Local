@@ -22,7 +22,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from orchestrator import Job
 
-WORKFLOW_BASE = Path("/mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows/mshub-gc/tools/mshub-gc")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+WORKFLOW_BASE = REPO_ROOT / "mshub-gc" / "tools" / "mshub-gc"
 
 
 def run(job: "Job") -> bool:

@@ -8,14 +8,14 @@
 <form id="submit-form" enctype="multipart/form-data">
 <div class="card">
 
-  <div class="form-section-title">Input Spectra — MGF (required)</div>
+  <div class="form-section-title">Input Spectra — MGF</div>
   <div class="file-drop">
     <input type="file" name="input_spectra" multiple accept=".mgf">
     <div class="file-placeholder">Drop MGF file(s) here or click to browse</div>
     <div class="file-list"></div>
   </div>
 
-  <div class="form-section-title">Quantification Table (required)</div>
+  <div class="form-section-title">Quantification Table</div>
   <div class="file-drop">
     <input type="file" name="quantification_table" accept=".csv,.txt,.tsv">
     <div class="file-placeholder">
@@ -26,7 +26,30 @@
     <div class="file-list"></div>
   </div>
 
-  <div class="form-section-title">Feature Table Source</div>
+  <div class="form-section-title">Optional Inputs</div>
+
+  <div class="form-grid" style="margin-bottom: 20px;">
+    <div style="grid-column: span 2;">
+      <label>Job Name</label>
+      <input type="text" name="JOB_NAME" placeholder="Enter a custom name for this job..." style="width: 100%;">
+    </div>
+  </div>
+
+  <label>Library Files (.mgf) — leave empty to use /libraries/ folder</label>
+  <div class="file-drop">
+    <input type="file" name="library" multiple accept=".mgf">
+    <div class="file-placeholder">Drop spectral library MGF files here or click to browse</div>
+    <div class="file-list"></div>
+  </div>
+
+  <label>Metadata Table (.tsv)</label>
+  <div class="file-drop">
+    <input type="file" name="metadata_table" accept=".tsv,.txt,.csv">
+    <div class="file-placeholder">Drop metadata table or click to browse</div>
+    <div class="file-list"></div>
+  </div>
+
+  <div class="form-section-title">Basic Options</div>
   <div class="form-grid">
     <div>
       <label>Quantification Table Source</label>
@@ -50,6 +73,14 @@
         <option value="mzmine_intensity_norm">MZmine Intensity</option>
       </select>
     </div>
+    <div>
+      <label>Precursor Ion Mass Tolerance (Da)</label>
+      <input type="number" name="TOLERANCE_PM" value="0.02" step="0.001" min="0">
+    </div>
+    <div>
+      <label>Fragment Ion Mass Tolerance (Da)</label>
+      <input type="number" name="TOLERANCE_ION" value="0.02" step="0.001" min="0">
+    </div>
   </div>
 
   <div class="form-section-title">Spectra Filtering</div>
@@ -72,10 +103,6 @@
 
   <div class="form-section-title">Networking Parameters</div>
   <div class="form-grid">
-    <div>
-      <label>Fragment Ion Tolerance (Da)</label>
-      <input type="number" name="TOLERANCE" value="0.02" step="0.001" min="0">
-    </div>
     <div>
       <label>Min Matched Peaks</label>
       <input type="number" name="MIN_MATCHED_PEAKS" value="6" min="1">
@@ -150,29 +177,6 @@
         <option value="1">Enabled</option>
       </select>
     </div>
-  </div>
-
-  <div class="form-section-title">Optional Inputs</div>
-
-  <div class="form-grid" style="margin-bottom: 20px;">
-    <div style="grid-column: span 2;">
-      <label>Job Name</label>
-      <input type="text" name="JOB_NAME" placeholder="Enter a custom name for this job..." style="width: 100%;">
-    </div>
-  </div>
-
-  <label>Library Files (.mgf) — leave empty to use /libraries/ folder</label>
-  <div class="file-drop">
-    <input type="file" name="library" multiple accept=".mgf">
-    <div class="file-placeholder">Drop spectral library MGF files here or click to browse</div>
-    <div class="file-list"></div>
-  </div>
-
-  <label>Metadata Table (.tsv)</label>
-  <div class="file-drop">
-    <input type="file" name="metadata_table" accept=".tsv,.txt,.csv">
-    <div class="file-placeholder">Drop metadata table or click to browse</div>
-    <div class="file-list"></div>
   </div>
 
   <div style="margin-top:28px; display:flex; gap:12px; align-items:center;">

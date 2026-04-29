@@ -7,7 +7,7 @@ Single-user, runs entirely in WSL2 on your machine.
 
 ```bash
 conda activate gnps
-cd /mnt/d/GNPS_Workflows/local_runner
+cd /mnt/d/GNPS_Local/local_runner
 pip install -r requirements.txt
 ```
 
@@ -43,7 +43,7 @@ Jobs are stored in `~/gnps_jobs/{job_id}/`:
 
 Place downloaded GNPS library MGF files in:
 ```
-/mnt/d/GNPS_Workflows/libraries/
+/mnt/d/GNPS_Local/libraries/
 ```
 
 Download from: https://gnps-external.ucsd.edu/gnpslibrary
@@ -70,7 +70,7 @@ Download from: https://gnps-external.ucsd.edu/gnpslibrary
 
 **Binary permission denied:**
 ```bash
-chmod +x /mnt/d/GNPS_Workflows/metabolomics-snets-v2/tools/metabolomicsnetsv2/binaries/*
+chmod +x /mnt/d/GNPS_Local/metabolomics-snets-v2/tools/metabolomicsnetsv2/binaries/*
 ```
 
 **Script not found errors:**

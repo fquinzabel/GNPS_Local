@@ -14,7 +14,7 @@
     <button class="btn btn-primary" onclick="restartJob()">Restart Job</button>
   </div>
 </div>
-<p class="subtitle">{{ job.workflow | replace('_', ' ') | title }} &nbsp;·&nbsp; Started {{ job.created_at[:19] | replace('T', ' ') }}</p>
+<p class="subtitle">{{ job.workflow | replace('_', ' ') | title }} &nbsp;·&nbsp; Created {{ job.created_at[:19] | replace('T', ' ') }}</p>
 
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
 

@@ -16,7 +16,7 @@ from enum import Enum
 from typing import Optional
 
 # Absolute path to the repo on the Windows filesystem, accessed via WSL2 mount
-REPO_ROOT = Path("/mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # Where all job I/O lives (inside WSL2 home for speed)
 JOBS_ROOT = Path.home() / "gnps_jobs"

@@ -4,8 +4,7 @@ Local optimization of GNPS Feature-Based Molecular Networking for single-user,
 offline metabolomics analysis on Windows 11 + WSL2.
 
 ## Original Work
-This project is a derivative of [GNPS](https://gnps.ucsd.edu) developed by 
-the Dorrestein Lab at UC San Diego.
+This project is a derivative of [GNPS](https://gnps.ucsd.edu) ([GNPS_Workflows](https://github.com/CCMS-UCSD/GNPS_Workflows)) developed by the Dorrestein Lab at UC San Diego.
 
 # User Guide
 

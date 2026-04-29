@@ -9,7 +9,6 @@ from typing import Optional, List, Annotated
 
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 
@@ -19,7 +18,6 @@ app = FastAPI(title="GNPS Local", version="1.0.0")
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
 # ── Pages ──────────────────────────────────────────────────────────────────────
@@ -181,7 +179,8 @@ async def submit_fbmn(
     input_spectra: List[UploadFile] = File(...),
     quantification_table: UploadFile = File(...),
     QUANT_TABLE_SOURCE: str = Form("mzmine2"),
-    TOLERANCE: float = Form(0.02),
+    TOLERANCE_ION: float = Form(0.02),
+    TOLERANCE_PM: float = Form(0.02),
     MIN_MATCHED_PEAKS: int = Form(6),
     SCORE_THRESHOLD: float = Form(0.7),
     PAIRS_MIN_COSINE: float = Form(0.1),
@@ -208,7 +207,8 @@ async def submit_fbmn(
     params = {
         "JOB_NAME": JOB_NAME,
         "QUANT_TABLE_SOURCE": QUANT_TABLE_SOURCE,
-        "TOLERANCE": str(TOLERANCE),
+        "TOLERANCE_ION": str(TOLERANCE_ION),
+        "TOLERANCE_PM": str(TOLERANCE_PM),
         "MIN_MATCHED_PEAKS": str(MIN_MATCHED_PEAKS),
         "SCORE_THRESHOLD": str(SCORE_THRESHOLD),
         "PAIRS_MIN_COSINE": str(PAIRS_MIN_COSINE),

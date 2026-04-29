@@ -6,6 +6,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 # Activate conda env if available
@@ -19,8 +20,8 @@ echo "  GNPS Local"
 echo "  ────────────────────────────────"
 echo "  Open in browser: http://localhost:8000"
 echo "  Jobs stored in:  ~/gnps_jobs/"
-echo "  Repo at:         /mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows"
+echo "  Repo at:         $REPO_ROOT"
 echo "  Stop with:       Ctrl+C"
 echo ""
 
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app:app --host 0.0.0.0 --port 8000

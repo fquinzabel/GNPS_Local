@@ -29,7 +29,8 @@ if TYPE_CHECKING:
     from orchestrator import Job
 
 # Path to the workflow tools directory
-WORKFLOW_BASE = Path("/mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows/metabolomics-snets-v2/tools/metabolomicsnetsv2")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+WORKFLOW_BASE = REPO_ROOT / "metabolomics-snets-v2" / "tools" / "metabolomicsnetsv2"
 SCRIPTS = WORKFLOW_BASE / "scripts"
 BINARIES = WORKFLOW_BASE / "binaries"
 
@@ -73,8 +74,9 @@ def run(job: "Job") -> bool:
     groupmapping_file = str(input_dir / "groupmapping.csv") if (input_dir / "groupmapping.csv").exists() else str(out / "empty_groupmapping.csv")
     attributemapping_file = str(input_dir / "attributemapping.csv") if (input_dir / "attributemapping.csv").exists() else str(out / "empty_attributemapping.csv")
     metadata_file = str(input_dir / "metadata.tsv") if (input_dir / "metadata.tsv").exists() else str(out / "empty_metadata.tsv")
-    library_dir = str(input_dir / "library") if (input_dir / "library").is_dir() else str(Path("/mnt/d/Samarth/Code/CHEM_3189/GNPS_Workflows/libraries"))
-
+    library_dir = str(input_dir / "library") if (input_dir / "library").is_dir() \
+    else str(REPO_ROOT / "libraries")
+    
     # Create empty optional files if needed
     _ensure_empty_file(out / "empty_groupmapping.csv")
     _ensure_empty_file(out / "empty_attributemapping.csv")
