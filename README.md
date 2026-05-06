@@ -23,6 +23,7 @@ This project is a derivative of [GNPS](https://gnps.ucsd.edu) ([GNPS_Workflows](
    - [3d. Get the GNPS Local Code](#3d-get-the-gnps-local-code)
    - [3e. Create the Python Environment](#3e-create-the-python-environment)
    - [3f. Start the Server](#3f-start-the-server)
+   - [3g. Updates](3g-updates)
 4. [Quick Start: Your First Analysis](#4-quick-start-your-first-analysis)
    - [4a. Prepare Your Data](#4a-prepare-your-data)
    - [4b. Submit a Job](#4b-submit-a-job)
@@ -183,7 +184,7 @@ You have two options: **GitHub Desktop (recommended)** or **ZIP download**. GitH
 
 **Step 2:** Visit the GNPS Local repository on GitHub and click **Fork** in the top-right corner. This creates a personal copy under your account — you now have your own version that you can sync.
 
-**Step 3:** In GitHub Desktop, go to **File → Clone Repository**, select your fork of `GNPS_Local`, and choose where to save it — for example, `D:\GNPS_Workflows`. GitHub Desktop will download all the code automatically.
+**Step 3:** In GitHub Desktop, go to **File → Clone Repository**, select your fork of `GNPS_Local`, and choose where to save it — for example, `D:\GNPS_Local`. GitHub Desktop will download all the code automatically.
 
 **Step 4:** Whenever a new version is released, GitHub Desktop will notify you. Click **Fetch origin** and then **Pull** to download the updates. Your local changes (if any) are preserved.
 
@@ -191,10 +192,10 @@ You have two options: **GitHub Desktop (recommended)** or **ZIP download**. GitH
 In your Ubuntu terminal, navigate to the downloaded folder:
 
 ```bash
-cd /mnt/d/GNPS_Workflows
+cd /mnt/d/GNPS_Local
 ```
 
-> **Note:** `/mnt/d/` is how WSL2 sees your `D:\` drive. If your GNPS Workflows folder is on `C:\`, use `/mnt/c/` instead. Ask your lab's system administrator if you are unsure where the files should live.
+> **Note:** `/mnt/d/` is how WSL2 sees your `D:\` drive. If your GNPS Workflows folder is on `C:\`, use `/mnt/c/` instead.
 
 ---
 
@@ -204,12 +205,12 @@ If you don't have a GitHub account or prefer not to use GitHub Desktop, download
 
 **Step 1:** Visit the GNPS Local GitHub repository and click the green **Code** button, then select **Download ZIP**.
 
-**Step 2:** Unzip the downloaded file on Windows and place the folder in a convenient location, such as `D:\GNPS_Workflows`.
+**Step 2:** Unzip the downloaded file on Windows and place the folder in a convenient location, such as `D:\GNPS_Local`.
 
 **Step 3:** In your Ubuntu terminal, navigate to that folder:
 
 ```bash
-cd /mnt/d/GNPS_Workflows
+cd /mnt/d/GNPS_Local
 ```
 
 > **Note:** If your folder is on `C:\` instead of `D:\`, use `/mnt/c/` in the Ubuntu path instead.
@@ -222,37 +223,40 @@ cd /mnt/d/GNPS_Workflows
 
 This step downloads and installs all the Python packages GNPS Local needs. It may take **5–15 minutes** depending on your internet speed — this is the longest step, but you only do it once.
 
-In your Ubuntu terminal, navigate to the `local_runner` folder:
-
+In your Ubuntu terminal, navigate to your project folder:
 ```bash
-cd /mnt/d/GNPS_Workflows/local_runner
+cd /mnt/d/GNPS_Local
 ```
 
-Install the required packages:
+Create the environment using the provided configuration file:
+
+```bash
+conda env create -f environment.yml
+```
+Activate the environment:
 
 ```bash
 conda activate gnps
-pip install -r requirements.txt
 ```
-
-> If you see `conda activate gnps` fail with "no environment named gnps", your lab administrator may need to create the full `gnps` environment from an `environment.yml` file first. Ask them to run `conda env create -f environment.yml` from the repo root.
-
-**Verify the install:**
-
-```bash
-python -c "import fastapi, uvicorn; print('All good!')"
-```
-
-You should see `All good!` printed.
 
 ---
 
 ### 3f. Start the Server
 
+Linux uses LF (linefeed) to mark the end of lines in text files. Cloning the repo on Windows, the script may have Windows-style line endings (CRLF) which can cause errors. The `sed` command below converts them to Unix format.
+
 Every time you want to use GNPS Local, you start the server from your Ubuntu terminal. You leave this terminal window open while you work.
 
+**First time only — fix line endings:**
+
 ```bash
-cd /mnt/d/GNPS_Workflows/local_runner
+cd /mnt/d/GNPS_Local/local_runner
+sed -i 's/\r$//' run.sh
+```
+
+**Then start the server:**
+
+```bash
 conda activate gnps
 bash run.sh
 ```
@@ -264,7 +268,7 @@ bash run.sh
   ────────────────────────────────
   Open in browser: http://localhost:8000
   Jobs stored in:  ~/gnps_jobs/
-  Repo at:         /mnt/d/GNPS_Workflows
+  Repo at:         /mnt/d/GNPS_Local
   Stop with:       Ctrl+C
 
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
@@ -273,6 +277,32 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 Open your Windows browser (Chrome, Edge, Firefox) and go to **http://localhost:8000**. You should see the GNPS Local home page with three workflow cards.
 
 > **To stop the server:** Press `Ctrl+C` in the Ubuntu terminal.
+
+---
+
+### 3g. Updates
+
+**If you cloned with Git:**
+```bash
+cd /mnt/d/GNPS_Local
+git pull origin main
+```
+
+**If you forked the repo:**
+
+Click the **"Sync fork"** button on your GitHub fork, then:
+```bash
+git pull origin main
+```
+
+**After updating:**
+
+You may need to reinstall Python dependencies:
+```bash
+cd local_runner
+conda activate gnps
+pip install -r requirements.txt
+```
 
 ---
 
@@ -403,7 +433,7 @@ Close the Ubuntu terminal completely and reopen it. Conda modifies your shell co
 **"Permission denied when running run.sh"**
 Run this once to make the script executable:
 ```bash
-chmod +x /mnt/d/GNPS_Workflows/local_runner/run.sh
+chmod +x /mnt/d/GNPS_Local/local_runner/run.sh
 ```
 
 **"The server starts but I can't reach http://localhost:8000"**
@@ -417,6 +447,12 @@ Confirm that the Ubuntu terminal shows the `Uvicorn running` line. If it does an
 The server processes jobs in background threads. If the server was stopped and restarted, previously queued jobs will not automatically resume. Use the "Restart" button on the job page, or resubmit.
 
 **"Step FAILED — how do I read the log?"**
+
+The run log output is shown in the UI of every job
+```
+http://localhost:8000/job/{job_id}
+```
+
 The run log is also saved to disk at:
 ```
 ~/gnps_jobs/{job_id}/run.log
@@ -459,6 +495,17 @@ When reporting a problem, please include:
 Use the **Restart** button on the job page. This clears the output and log and re-runs the full pipeline.
 
 **To delete a job entirely:**
+
+Locate the following in Windows File Explorer
+```
+\\wsl.localhost\Ubuntu\home\{username}\gnps_jobs
+```
+
+This folder stores all job runs by job ID, delete the entire job ID folder to delete a job.
+
+You can also navigate to the above location in Ubuntu and use the following command to delete by job ID.
+
+
 ```bash
 rm -rf ~/gnps_jobs/JOBID
 ```
@@ -590,7 +637,7 @@ GNPS Local supports multiple simultaneous jobs — just submit them from the web
 - [ ] Feature table and MGF from the same software run (scan numbers must match)
 - [ ] Metadata filename column exactly matches feature table sample names
 - [ ] Single merged MGF file (not one file per sample)
-- [ ] GNPS spectral library `.mgf` file(s) placed in `/mnt/d/GNPS_Workflows/libraries/`
+- [ ] GNPS spectral library `.mgf` file(s) placed in `/mnt/d/GNPS_Local/libraries/`
 
 ### Spectral Libraries
 
@@ -600,7 +647,7 @@ https://gnps-external.ucsd.edu/gnpslibrary
 ```
 Place any downloaded `.mgf` files directly into:
 ```
-/mnt/d/GNPS_Workflows/libraries/
+/mnt/d/GNPS_Local/libraries/
 ```
 The library is loaded automatically for every job.
 
