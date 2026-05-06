@@ -23,6 +23,7 @@ This project is a derivative of [GNPS](https://gnps.ucsd.edu) ([GNPS_Workflows](
    - [3d. Get the GNPS Local Code](#3d-get-the-gnps-local-code)
    - [3e. Create the Python Environment](#3e-create-the-python-environment)
    - [3f. Start the Server](#3f-start-the-server)
+   - [3g. Updates](3g-updates)
 4. [Quick Start: Your First Analysis](#4-quick-start-your-first-analysis)
    - [4a. Prepare Your Data](#4a-prepare-your-data)
    - [4b. Submit a Job](#4b-submit-a-job)
@@ -194,7 +195,7 @@ In your Ubuntu terminal, navigate to the downloaded folder:
 cd /mnt/d/GNPS_Workflows
 ```
 
-> **Note:** `/mnt/d/` is how WSL2 sees your `D:\` drive. If your GNPS Workflows folder is on `C:\`, use `/mnt/c/` instead. Ask your lab's system administrator if you are unsure where the files should live.
+> **Note:** `/mnt/d/` is how WSL2 sees your `D:\` drive. If your GNPS Workflows folder is on `C:\`, use `/mnt/c/` instead.
 
 ---
 
@@ -222,16 +223,27 @@ cd /mnt/d/GNPS_Workflows
 
 This step downloads and installs all the Python packages GNPS Local needs. It may take **5–15 minutes** depending on your internet speed — this is the longest step, but you only do it once.
 
-In your Ubuntu terminal, navigate to the `local_runner` folder:
+In your Ubuntu terminal, create a conda environment:
+```bash
+conda create -n gnps python=3.10
+```
+
+>Note: the name for the environment is case sensitive
+
+and activate it:
+```bash
+conda activate gnps
+```
+
+navigate to the `root` and `local_runner` folder to install required packages:
+
+```bash
+cd /mnt/d/GNPS_Workflows
+pip install -r requirements.txt
+```
 
 ```bash
 cd /mnt/d/GNPS_Workflows/local_runner
-```
-
-Install the required packages:
-
-```bash
-conda activate gnps
 pip install -r requirements.txt
 ```
 
@@ -240,19 +252,29 @@ pip install -r requirements.txt
 **Verify the install:**
 
 ```bash
-python -c "import fastapi, uvicorn; print('All good!')"
+python -c "import fastapi, uvicorn; print('Done')"
 ```
 
-You should see `All good!` printed.
+You should see `Done` printed.
 
 ---
 
 ### 3f. Start the Server
 
+Linux uses LF (linefeed) to mark the end of lines in text files. Cloning the repo on Windows, the script may have Windows-style line endings (CRLF) which can cause errors. The `sed` command below converts them to Unix format.
+
 Every time you want to use GNPS Local, you start the server from your Ubuntu terminal. You leave this terminal window open while you work.
+
+**First time only — fix line endings:**
 
 ```bash
 cd /mnt/d/GNPS_Workflows/local_runner
+sed -i 's/\r$//' run.sh
+```
+
+**Then start the server:**
+
+```bash
 conda activate gnps
 bash run.sh
 ```
@@ -273,6 +295,32 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 Open your Windows browser (Chrome, Edge, Firefox) and go to **http://localhost:8000**. You should see the GNPS Local home page with three workflow cards.
 
 > **To stop the server:** Press `Ctrl+C` in the Ubuntu terminal.
+
+---
+
+### 3g. Updates
+
+**If you cloned with Git:**
+```bash
+cd /mnt/d/GNPS_Workflows
+git pull origin main
+```
+
+**If you forked the repo:**
+
+Click the **"Sync fork"** button on your GitHub fork, then:
+```bash
+git pull origin main
+```
+
+**After updating:**
+
+You may need to reinstall Python dependencies:
+```bash
+cd local_runner
+conda activate gnps
+pip install -r requirements.txt
+```
 
 ---
 
@@ -417,6 +465,12 @@ Confirm that the Ubuntu terminal shows the `Uvicorn running` line. If it does an
 The server processes jobs in background threads. If the server was stopped and restarted, previously queued jobs will not automatically resume. Use the "Restart" button on the job page, or resubmit.
 
 **"Step FAILED — how do I read the log?"**
+
+The run log output is shown in the UI of every job
+```
+http://localhost:8000/job/{job_id}
+```
+
 The run log is also saved to disk at:
 ```
 ~/gnps_jobs/{job_id}/run.log
@@ -459,6 +513,17 @@ When reporting a problem, please include:
 Use the **Restart** button on the job page. This clears the output and log and re-runs the full pipeline.
 
 **To delete a job entirely:**
+
+Locate the following in Windows File Explorer
+```
+\\wsl.localhost\Ubuntu\home\{username}\gnps_jobs
+```
+
+This folder stores all job runs by job ID, delete the entire job ID folder to delete a job.
+
+You can also navigate to the above location in Ubuntu and use the following command to delete by job ID.
+
+
 ```bash
 rm -rf ~/gnps_jobs/JOBID
 ```
