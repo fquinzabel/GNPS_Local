@@ -230,6 +230,7 @@ cd /mnt/d/GNPS_Local
 
 Create the environment using the provided configuration file:
 
+and activate it:
 ```bash
 conda env create -f environment.yml
 ```
