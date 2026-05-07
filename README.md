@@ -1,7 +1,7 @@
 # GNPS Local
 
 Local optimization of GNPS Feature-Based Molecular Networking for single-user, 
-offline metabolomics analysis on Windows 11 + WSL2.
+offline metabolomics analysis on Windows 11 + WSL2 or native macOS.
 
 ## Original Work
 This project is a derivative of [GNPS](https://gnps.ucsd.edu) ([GNPS_Workflows](https://github.com/CCMS-UCSD/GNPS_Workflows)) developed by the Dorrestein Lab at UC San Diego.
@@ -16,30 +16,26 @@ This project is a derivative of [GNPS](https://gnps.ucsd.edu) ([GNPS_Workflows](
 
 1. [What is GNPS Local?](#1-what-is-gnps-local)
 2. [Before You Start: Prerequisites](#2-before-you-start-prerequisites)
-3. [Step-by-Step Installation](#3-step-by-step-installation)
-   - [3a. Enable WSL2 on Windows 11](#3a-enable-wsl2-on-windows-11)
-   - [3b. Install Ubuntu 24.04](#3b-install-ubuntu-2404)
-   - [3c. Install Conda (Miniconda)](#3c-install-conda-miniconda)
-   - [3d. Get the GNPS Local Code](#3d-get-the-gnps-local-code)
-   - [3e. Create the Python Environment](#3e-create-the-python-environment)
-   - [3f. Start the Server](#3f-start-the-server)
-   - [3g. Updates](3g-updates)
-4. [Quick Start: Your First Analysis](#4-quick-start-your-first-analysis)
-   - [4a. Prepare Your Data](#4a-prepare-your-data)
-   - [4b. Submit a Job](#4b-submit-a-job)
-   - [4c. Monitor Progress](#4c-monitor-progress)
-   - [4d. Download and View Results](#4d-download-and-view-results)
-5. [Understanding Your Results](#5-understanding-your-results)
-6. [Troubleshooting & FAQ](#6-troubleshooting--faq)
-7. [Workflow Details](#7-workflow-details-for-the-curious)
-8. [Data Format Reference](#8-data-format-reference)
-9. [Next Steps & Advanced Usage](#9-next-steps--advanced-usage)
+3. [Choose Your Platform](#3-choose-your-platform)
+4. [Step-by-Step Installation](#4-step-by-step-installation)
+   - [Windows WSL2: Setup](#windows-wsl2-setup)
+   - [macOS: Setup](#macos-setup)
+5. [Quick Start: Your First Analysis](#5-quick-start-your-first-analysis)
+   - [5a. Prepare Your Data](#5a-prepare-your-data)
+   - [5b. Submit a Job](#5b-submit-a-job)
+   - [5c. Monitor Progress](#5c-monitor-progress)
+   - [5d. Download and View Results](#5d-download-and-view-results)
+6. [Understanding Your Results](#6-understanding-your-results)
+7. [Troubleshooting & FAQ](#7-troubleshooting--faq)
+8. [Workflow Details](#8-workflow-details-for-the-curious)
+9. [Data Format Reference](#9-data-format-reference)
+10. [Next Steps & Advanced Usage](#10-next-steps--advanced-usage)
 
 ---
 
 ## 1. What is GNPS Local?
 
-GNPS Local is an offline version of the GNPS (Global Natural Products Social Molecular Networking) platform — the widely-used tool for annotating small molecules in MS/MS metabolomics data. Where the original GNPS ran on cloud servers at UC San Diego, GNPS Local runs entirely on your own Windows machine, with no internet connection needed once it is set up.
+GNPS Local is an offline version of the GNPS (Global Natural Products Social Molecular Networking) platform — the widely-used tool for annotating small molecules in MS/MS metabolomics data. Where the original GNPS ran on cloud servers at UC San Diego, GNPS Local runs entirely on your own computer, with no internet connection needed once it is set up.
 
 The core workflow supported is **Feature-Based Molecular Networking (FBMN)**. You bring your MS/MS spectra and a feature quantification table (from MZmine, XCMS, MS-DIAL, or similar), and GNPS Local builds a molecular network: a visual map in which each node is a detected feature and edges connect features with similar fragmentation patterns. Nodes that match known compounds in the spectral library are annotated automatically.
 
@@ -51,19 +47,41 @@ This tool is designed for researchers who already understand molecular networkin
 
 Before installing, confirm the following:
 
-- [ ] **Windows 11** (Home, Pro, or Enterprise — all editions support WSL2)
-- [ ] **Administrator access** to your Windows account (needed for WSL2 setup)
-- [ ] **~20 GB of free disk space** (for Linux environment, conda, workflow tools, and your data)
-- [ ] **Virtualization enabled in BIOS/UEFI** — most modern laptops have this on by default; see [Troubleshooting](#installation-issues) if unsure
+- [ ] **Windows 11 (for WSL2)** or **macOS 10.15+** (Intel or Apple Silicon)
+- [ ] **Administrator access** to your computer account (needed for installing software)
+- [ ] **~20 GB of free disk space** (for environments, tools, and your data)
+- [ ] **Virtualization enabled** (Windows only — most modern computers have this enabled by default)
 - [ ] **Internet connection** for the initial setup (you can work offline afterward)
 
 > **No prior Linux or command-line experience required.** The steps below include every command you need to copy and paste.
 
 ---
 
-## 3. Step-by-Step Installation
+## 3. Choose Your Platform
 
-### 3a. Enable WSL2 on Windows 11
+GNPS Local runs natively on both Windows (via WSL2) and macOS. Choose the section below that matches your computer:
+
+- **[Windows WSL2 Setup](#windows-wsl2-setup)** — Windows 11, running Linux inside Windows
+- **[macOS Setup](#macos-setup)** — Native macOS (Intel or Apple Silicon M1/M2/M3/etc.)
+
+---
+
+## 4. Step-by-Step Installation
+
+### Platform-Specific Prerequisites
+
+**Windows WSL2 users:** You'll need Windows 11 with administrator access. No additional tools are required before starting section 4a.
+
+**macOS users:** Before starting the macOS setup (after the Windows WSL2 section), you'll need to:
+1. Check your Mac chip type (Intel or Apple Silicon)
+2. Install Homebrew (the macOS package manager)
+3. Install Git
+
+---
+
+# WINDOWS WSL2 SETUP
+
+### 4a. Enable WSL2 on Windows 11
 
 **What is WSL2?** Think of it as a lightweight Linux computer running invisibly inside Windows. GNPS Local's analysis tools are Linux programs, so they need this Linux layer to run. You do not need to understand Linux to use it — you just need it running in the background.
 
@@ -98,7 +116,7 @@ The requested operation is successful.
 
 ---
 
-### 3b. Install Ubuntu 24.04
+### 4b. Install Ubuntu 24.04
 
 After your restart, Ubuntu may open automatically and ask you to set up a username and password. If it does not open automatically:
 
@@ -133,7 +151,21 @@ The `VERSION 2` confirms WSL2 is active. You are ready to proceed.
 
 ---
 
-### 3c. Install Conda (Miniconda)
+### 4c. Install System Dependencies (Windows WSL2)
+
+Before setting up your Python environment, you must ensure your Ubuntu system has the basic tools needed to run C++ analysis modules.
+
+In your Ubuntu terminal, copy and paste this single line:
+
+```bash
+sudo apt update && sudo apt install -y build-essential libgomp1
+```
+
+**Why is this needed?** `build-essential` installs the C++ compiler (g++) and `libgomp1` provides the library for parallel processing. GNPS Local uses these to run high-performance calculations on your data. You will be asked for your Linux password to run this.
+
+---
+
+### 4d. Install Conda (Miniconda) — Windows WSL2
 
 Conda is a tool that manages Python packages — think of it as an app store for scientific Python software that keeps everything neatly organized so different tools don't conflict with each other.
 
@@ -172,7 +204,96 @@ You should see something like `conda 24.x.x`. If you see "command not found", cl
 
 ---
 
-### 3d. Get the GNPS Local Code
+# macOS SETUP
+
+### 4a. Check Your Mac Chip
+
+Open **Terminal** (Applications → Utilities → Terminal) and run:
+
+```bash
+uname -m
+```
+
+**Output meanings:**
+- `x86_64` = Intel Mac
+- `arm64` = Apple Silicon Mac (M1/M2/M3/etc.)
+
+Note your result — you'll need it below.
+
+---
+
+### 4b. Install Homebrew (macOS)
+
+Homebrew is a package manager for macOS. Install it first:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+If you're on **Apple Silicon (M1/M2/M3)**, add Homebrew to your PATH:
+
+```bash
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+```
+
+Verify it works:
+
+```bash
+brew --version
+```
+
+---
+
+### 4c. Install Git (macOS)
+
+```bash
+brew install git
+```
+
+Verify:
+
+```bash
+git --version
+```
+
+---
+
+### 4d. Install Conda (macOS)
+
+We recommend **Miniconda** (lightweight) or **Anaconda** (full-featured). For most users, Miniconda is sufficient.
+
+#### Option A: Miniconda (recommended)
+
+```bash
+brew install miniconda
+conda init zsh
+```
+
+Then close and reopen Terminal, or run:
+
+```bash
+source ~/.zprofile
+```
+
+#### Option B: Anaconda
+
+```bash
+brew install anaconda
+conda init zsh
+source ~/.zprofile
+```
+
+Verify conda works:
+
+```bash
+conda --version
+```
+
+---
+
+## Consolidated Setup Steps (Windows WSL2 & macOS)
+### 4e. Get the GNPS Local Code
 
 You have two options: **GitHub Desktop (recommended)** or **ZIP download**. GitHub Desktop makes it easy to download the code and receive updates when new versions are released — no command line required.
 
@@ -184,18 +305,32 @@ You have two options: **GitHub Desktop (recommended)** or **ZIP download**. GitH
 
 **Step 2:** Visit the GNPS Local repository on GitHub and click **Fork** in the top-right corner. This creates a personal copy under your account — you now have your own version that you can sync.
 
-**Step 3:** In GitHub Desktop, go to **File → Clone Repository**, select your fork of `GNPS_Local`, and choose where to save it — for example, `D:\GNPS_Local`. GitHub Desktop will download all the code automatically.
+**Step 3:** In GitHub Desktop, go to **File → Clone Repository**, select your fork of `GNPS_Local`, and choose where to save it.
+
+- **Windows WSL2:** Choose `D:\GNPS_Local` (or another Windows path)
+- **macOS:** Choose `~/GNPS_Local` (your home directory)
+
+GitHub Desktop will download all the code automatically.
 
 **Step 4:** Whenever a new version is released, GitHub Desktop will notify you. Click **Fetch origin** and then **Pull** to download the updates. Your local changes (if any) are preserved.
 
-**For use in Ubuntu:**
+**Step 5: For use in your terminal:**
+
+**Windows WSL2:**
 In your Ubuntu terminal, navigate to the downloaded folder:
 
 ```bash
 cd /mnt/d/GNPS_Local
 ```
 
-> **Note:** `/mnt/d/` is how WSL2 sees your `D:\` drive. If your GNPS Workflows folder is on `C:\`, use `/mnt/c/` instead.
+> **Note:** `/mnt/d/` is how WSL2 sees your `D:\` drive. If your GNPS Local folder is on `C:\`, use `/mnt/c/` instead.
+
+**macOS:**
+In Terminal, navigate to the downloaded folder:
+
+```bash
+cd ~/GNPS_Local
+```
 
 ---
 
@@ -205,9 +340,15 @@ If you don't have a GitHub account or prefer not to use GitHub Desktop, download
 
 **Step 1:** Visit the GNPS Local GitHub repository and click the green **Code** button, then select **Download ZIP**.
 
-**Step 2:** Unzip the downloaded file on Windows and place the folder in a convenient location, such as `D:\GNPS_Local`.
+**Step 2:** Unzip the downloaded file.
 
-**Step 3:** In your Ubuntu terminal, navigate to that folder:
+- **Windows WSL2:** Place the folder in a convenient location on Windows, such as `D:\GNPS_Local`
+- **macOS:** Place the folder in your home directory, such as `~/GNPS_Local`
+
+**Step 3: Access from terminal:**
+
+**Windows WSL2:**
+In your Ubuntu terminal, navigate to that folder:
 
 ```bash
 cd /mnt/d/GNPS_Local
@@ -215,47 +356,67 @@ cd /mnt/d/GNPS_Local
 
 > **Note:** If your folder is on `C:\` instead of `D:\`, use `/mnt/c/` in the Ubuntu path instead.
 
+**macOS:**
+In Terminal, navigate to that folder:
+
+```bash
+cd ~/GNPS_Local
+```
+
 **To receive updates later:** You will need to manually download and unzip a new version from GitHub when releases are announced. This is more cumbersome than GitHub Desktop, but it works fine if you prefer to avoid GitHub altogether.
 
 ---
 
-### 3e. Create the Python Environment
+### 4f. Create the Python Environment
 
 This step downloads and installs all the Python packages GNPS Local needs. It may take **5–15 minutes** depending on your internet speed — this is the longest step, but you only do it once.
 
-In your Ubuntu terminal, navigate to your project folder:
+**Windows WSL2:** In your Ubuntu terminal, navigate to your project folder:
+
 ```bash
 cd /mnt/d/GNPS_Local
 ```
 
-Create the environment using the provided configuration file:
+**macOS:** In Terminal, navigate to your project folder:
 
-and activate it:
+```bash
+cd ~/GNPS_Local
+```
+
+**Both platforms:** Create the environment using the provided configuration file:
+
 ```bash
 conda env create -f environment.yml
 ```
+
 Activate the environment:
 
 ```bash
 conda activate gnps
 ```
 
+**macOS only:** If you see warnings about architecture mismatches during installation, they're usually safe to ignore. If installation fails, try:
+
+```bash
+ARCHFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install -r requirements.txt
+```
+
 ---
 
-### 3f. Start the Server
+### 4g. Start the Server
 
-Linux uses LF (linefeed) to mark the end of lines in text files. Cloning the repo on Windows, the script may have Windows-style line endings (CRLF) which can cause errors. The `sed` command below converts them to Unix format.
+Every time you want to use GNPS Local, start the server from your terminal. You leave this terminal window open while you work.
 
-Every time you want to use GNPS Local, you start the server from your Ubuntu terminal. You leave this terminal window open while you work.
+**Windows WSL2:**
 
-**First time only — fix line endings:**
+First time only — fix line endings (Linux uses LF, but cloning on Windows may have created CRLF line endings):
 
 ```bash
 cd /mnt/d/GNPS_Local/local_runner
 sed -i 's/\r$//' run.sh
 ```
 
-**Then start the server:**
+Then start the server:
 
 ```bash
 conda activate gnps
@@ -275,41 +436,87 @@ bash run.sh
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
-Open your Windows browser (Chrome, Edge, Firefox) and go to **http://localhost:8000**. You should see the GNPS Local home page with three workflow cards.
-
-> **To stop the server:** Press `Ctrl+C` in the Ubuntu terminal.
+Open your Windows browser (Chrome, Edge, Firefox) and go to **http://localhost:8000**.
 
 ---
 
-### 3g. Updates
+**macOS:**
 
-**If you cloned with Git:**
+```bash
+cd ~/GNPS_Local/local_runner
+conda activate gnps
+python -m uvicorn app:app --host 127.0.0.1 --port 8000
+```
+
+**Expected output:**
+
+```
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+```
+
+Open your browser and go to **http://localhost:8000**.
+
+---
+
+**Both platforms:** You should see the GNPS Local home page with three workflow cards.
+
+> **To stop the server:** Press `Ctrl+C` in your terminal.
+
+---
+
+### 4h. Updates
+
+You only need to update when new versions of GNPS Local are released.
+
+**If you cloned with GitHub Desktop:**
+
+Open GitHub Desktop, and it will notify you when updates are available. Click **Fetch origin** and then **Pull** to download the updates.
+
+**If you cloned with Git (command line):**
+
+**Windows WSL2:**
+
 ```bash
 cd /mnt/d/GNPS_Local
 git pull origin main
 ```
 
-**If you forked the repo:**
+**macOS:**
 
-Click the **"Sync fork"** button on your GitHub fork, then:
 ```bash
+cd ~/GNPS_Local
 git pull origin main
 ```
 
+**If you forked the repo:**
+
+Click the **"Sync fork"** button on your GitHub fork, then use the git commands above.
+
 **After updating:**
 
-You may need to reinstall Python dependencies:
+You may need to reinstall Python dependencies. Run these commands:
+
+**Windows WSL2:**
+
 ```bash
-cd local_runner
+cd /mnt/d/GNPS_Local/local_runner
+conda activate gnps
+pip install -r requirements.txt
+```
+
+**macOS:**
+
+```bash
+cd ~/GNPS_Local/local_runner
 conda activate gnps
 pip install -r requirements.txt
 ```
 
 ---
 
-## 4. Quick Start: Your First Analysis
+## 5. Quick Start: Your First Analysis
 
-### 4a. Prepare Your Data
+### 5a. Prepare Your Data
 
 For Feature-Based Molecular Networking (FBMN), you need three things:
 
@@ -325,11 +532,11 @@ For Feature-Based Molecular Networking (FBMN), you need three things:
 - The feature table must have columns named `row ID`, `row m/z`, `row retention time`, plus one `[filename] Peak area` column per sample.
 - Metadata must have a `filename` column whose values exactly match the sample file names in your feature table.
 
-See [Section 8](#8-data-format-reference) for detailed column requirements and examples.
+See [Section 9](#9-data-format-reference) for detailed column requirements and examples.
 
 ---
 
-### 4b. Submit a Job
+### 5b. Submit a Job
 
 1. Open **http://localhost:8000** in your browser.
 2. Click **"Feature-Based Molecular Networking"** (the primary, recommended workflow).
@@ -346,7 +553,7 @@ You will be redirected to a job status page automatically.
 
 ---
 
-### 4c. Monitor Progress
+### 5c. Monitor Progress
 
 The job page shows:
 
@@ -366,7 +573,7 @@ If a step fails, the log will show `STEP FAILED (exit 1)` with an error message.
 
 ---
 
-### 4d. Download and View Results
+### 5d. Download and View Results
 
 When the job shows **Done**, the Output Files panel lists all results. Key files:
 
@@ -386,7 +593,7 @@ When the job shows **Done**, the Output Files panel lists all results. Key files
 
 ---
 
-## 5. Understanding Your Results
+## 6. Understanding Your Results
 
 ### The Molecular Network
 
@@ -421,9 +628,11 @@ Nodes with the same component index belong to the same connected cluster in the 
 
 ---
 
-## 6. Troubleshooting & FAQ
+## 7. Troubleshooting & FAQ
 
 ### Installation Issues
+
+#### Windows WSL2
 
 **"WSL2 won't install — error about virtualization"**
 Your computer's CPU virtualization feature is disabled. Restart your computer and enter the BIOS/UEFI settings (usually by pressing F2, F10, Del, or Esc during startup — your computer's manual will specify which). Look for a setting called "Intel Virtualization Technology", "Intel VT-x", "AMD-V", or "SVM Mode" and enable it. Save and restart.
@@ -433,12 +642,60 @@ Close the Ubuntu terminal completely and reopen it. Conda modifies your shell co
 
 **"Permission denied when running run.sh"**
 Run this once to make the script executable:
+
 ```bash
 chmod +x /mnt/d/GNPS_Local/local_runner/run.sh
 ```
 
 **"The server starts but I can't reach http://localhost:8000"**
 Confirm that the Ubuntu terminal shows the `Uvicorn running` line. If it does and the browser still fails, try `http://127.0.0.1:8000` instead.
+
+#### macOS
+
+**"conda: command not found"**
+Conda wasn't added to your PATH. Run:
+
+```bash
+source ~/.zprofile
+```
+
+Then try again. If that doesn't work, reinstall Miniconda:
+
+```bash
+brew reinstall miniconda
+conda init zsh
+source ~/.zprofile
+```
+
+**"gnps environment not found"**
+Make sure you created the environment:
+
+```bash
+conda create -n gnps python=3.9
+conda activate gnps
+pip install -r requirements.txt
+```
+
+**"ModuleNotFoundError: No module named 'fastapi'"**
+Make sure the `gnps` environment is activated:
+
+```bash
+conda activate gnps
+```
+
+If it's activated and still fails, reinstall packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+**"Apple Silicon: Installation hangs or fails"**
+Try specifying architecture flags:
+
+```bash
+conda activate gnps
+ARCHFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install -r requirements.txt
+```
 
 ---
 
@@ -449,28 +706,57 @@ The server processes jobs in background threads. If the server was stopped and r
 
 **"Step FAILED — how do I read the log?"**
 
-The run log output is shown in the UI of every job
+The run log output is shown in the UI of every job:
 ```
 http://localhost:8000/job/{job_id}
 ```
 
 The run log is also saved to disk at:
-```
-~/gnps_jobs/{job_id}/run.log
-```
-Open it in Ubuntu with:
+
+**Windows WSL2:**
 ```bash
 cat ~/gnps_jobs/JOBID/run.log | tail -100
 ```
+
+**macOS:**
+```bash
+cat ~/gnps_jobs/JOBID/run.log | tail -100
+```
+
 The relevant error will be near the bottom, under a `STEP FAILED` line.
 
 **"The server won't start — port 8000 is already in use"**
 Another process (possibly a previous server instance) is using port 8000. Find and stop it:
+
+**Windows WSL2 (Ubuntu):**
 ```bash
 lsof -i :8000
 kill -9 <PID shown above>
 ```
-Then restart with `bash run.sh`.
+
+**macOS:**
+```bash
+lsof -i :8000
+kill -9 <PID shown above>
+```
+
+Then restart the server.
+
+**Alternatively, use a different port:**
+
+**Windows WSL2:**
+```bash
+cd /mnt/d/GNPS_Local/local_runner
+bash run.sh --port 8001
+```
+
+**macOS:**
+```bash
+cd ~/GNPS_Local/local_runner
+python -m uvicorn app:app --host 127.0.0.1 --port 8001
+```
+
+Then open `http://localhost:8001` in your browser.
 
 **"Upload fails or the form seems to hang"**
 Large MGF files (>500 MB) may take a moment to upload over the localhost connection. Wait 30 seconds before assuming it has failed. The browser's network tab can confirm whether the upload is still in progress.
@@ -491,21 +777,27 @@ When reporting a problem, please include:
 2. The last 50 lines of `~/gnps_jobs/{job_id}/run.log`
 3. The name and source of your feature-finding software
 4. Approximate number of features and samples
+5. Your platform (Windows WSL2 or macOS Intel/Apple Silicon)
 
 **To restart a failed job from scratch** (same files, same parameters):
 Use the **Restart** button on the job page. This clears the output and log and re-runs the full pipeline.
 
 **To delete a job entirely:**
 
-Locate the following in Windows File Explorer
+**Windows WSL2:**
+Locate the following in Windows File Explorer:
 ```
 \\wsl.localhost\Ubuntu\home\{username}\gnps_jobs
 ```
 
-This folder stores all job runs by job ID, delete the entire job ID folder to delete a job.
+Delete the entire job ID folder to delete a job. You can also use the Ubuntu terminal:
 
-You can also navigate to the above location in Ubuntu and use the following command to delete by job ID.
+```bash
+rm -rf ~/gnps_jobs/JOBID
+```
 
+**macOS:**
+In Terminal, delete the job:
 
 ```bash
 rm -rf ~/gnps_jobs/JOBID
@@ -513,7 +805,7 @@ rm -rf ~/gnps_jobs/JOBID
 
 ---
 
-## 7. Workflow Details (For the Curious)
+## 8. Workflow Details (For the Curious)
 
 ### What FBMN Actually Does
 
@@ -549,7 +841,7 @@ Your data goes through these stages in order:
 
 ---
 
-## 8. Data Format Reference
+## 9. Data Format Reference
 
 ### Feature Quantification Table
 
@@ -620,7 +912,7 @@ If your software uses `FEATURE_ID=` instead of `SCANS=`, this is handled automat
 
 ---
 
-## 9. Next Steps & Advanced Usage
+## 10. Next Steps & Advanced Usage
 
 ### Running Multiple Jobs
 
@@ -634,11 +926,13 @@ GNPS Local supports multiple simultaneous jobs — just submit them from the web
 
 ### Checklist Before Analyzing Your Own Data
 
-- [ ] Feature table exported from your software in the correct format (see Section 8)
+- [ ] Feature table exported from your software in the correct format (see Section 9)
 - [ ] Feature table and MGF from the same software run (scan numbers must match)
 - [ ] Metadata filename column exactly matches feature table sample names
 - [ ] Single merged MGF file (not one file per sample)
-- [ ] GNPS spectral library `.mgf` file(s) placed in `/mnt/d/GNPS_Local/libraries/`
+- [ ] GNPS spectral library `.mgf` file(s) placed in:
+  - **Windows WSL2:** `/mnt/d/GNPS_Local/libraries/`
+  - **macOS:** `~/GNPS_Local/libraries/`
 
 ### Spectral Libraries
 
@@ -646,10 +940,19 @@ Download updated GNPS spectral libraries from:
 ```
 https://gnps-external.ucsd.edu/gnpslibrary
 ```
+
 Place any downloaded `.mgf` files directly into:
+
+**Windows WSL2:**
 ```
 /mnt/d/GNPS_Local/libraries/
 ```
+
+**macOS:**
+```
+~/GNPS_Local/libraries/
+```
+
 The library is loaded automatically for every job.
 
 ### What Is Not Yet Implemented
