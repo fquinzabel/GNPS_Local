@@ -1,0 +1,12 @@
+name: gnps
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.10
+  - llvm-openmp
+  - pip
+  - pip:
+    - -r requirements.txt
+    - -r local_runner/requirements.txt

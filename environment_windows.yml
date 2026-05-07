@@ -5,8 +5,7 @@ channels:
   - defaults
 dependencies:
   - python=3.10
-  - llvm-openmp  # [osx]
-  - libgomp  # [linux]
+  - libgomp
   - pip
   - pip:
     - -r requirements.txt

@@ -375,18 +375,14 @@ This step downloads and installs all the Python packages GNPS Local needs. It ma
 
 ```bash
 cd /mnt/d/GNPS_Local
+conda env create -f environment_windows.yml
 ```
 
 **macOS:** In Terminal, navigate to your project folder:
 
 ```bash
 cd ~/GNPS_Local
-```
-
-**Both platforms:** Create the environment using the provided configuration file:
-
-```bash
-conda env create -f environment.yml
+conda env create -f environment_mac.yml
 ```
 
 Activate the environment:
@@ -650,8 +646,6 @@ chmod +x /mnt/d/GNPS_Local/local_runner/run.sh
 **"The server starts but I can't reach http://localhost:8000"**
 Confirm that the Ubuntu terminal shows the `Uvicorn running` line. If it does and the browser still fails, try `http://127.0.0.1:8000` instead.
 
-#### macOS
-
 **Unable to create symlink, files too long**
 
 1) Clone without checkout out files
@@ -669,6 +663,8 @@ git config core.symlinks false
 ```bash
 git checkout
 ```
+
+#### macOS
 
 **"conda: command not found"**
 Conda wasn't added to your PATH. Run:
