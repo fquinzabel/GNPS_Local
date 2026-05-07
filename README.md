@@ -652,6 +652,24 @@ Confirm that the Ubuntu terminal shows the `Uvicorn running` line. If it does an
 
 #### macOS
 
+**Unable to create symlink, files too long**
+
+1) Clone without checkout out files
+```bash
+git clone --no-checkout <your-repo-url>
+cd <repo-name>
+```
+
+2) Disable symlinks in the local config
+```bash
+git config core.symlinks false
+```
+
+3) Force the checkout
+```bash
+git checkout
+```
+
 **"conda: command not found"**
 Conda wasn't added to your PATH. Run:
 
